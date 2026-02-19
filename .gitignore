@@ -1,0 +1,18 @@
+# Build outputs
+build/
+build-*/
+
+# Generated artifacts
+generated/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Common binaries
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.exe

@@ -1,25 +1,39 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-OUT_DIR="${OUT_DIR:-$ROOT/tools/pto/out}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PTO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+LINXISA_ROOT="${LINXISA_ROOT:-}"
+if [[ -z "$LINXISA_ROOT" ]]; then
+  CAND="$(cd "$PTO_ROOT/../.." && pwd)"
+  if [[ -f "$CAND/avs/qemu/run_tests.py" && -d "$CAND/workloads/generated" ]]; then
+    LINXISA_ROOT="$CAND"
+  fi
+fi
+
+if [[ -n "$LINXISA_ROOT" && -d "$LINXISA_ROOT/workloads/pto_kernels/kernels" ]]; then
+  KERNEL_ROOT="$LINXISA_ROOT/workloads/pto_kernels/kernels"
+  DEFAULT_OUT_DIR="$LINXISA_ROOT/workloads/generated/pto_asm"
+else
+  KERNEL_ROOT="$PTO_ROOT/kernels"
+  DEFAULT_OUT_DIR="$PTO_ROOT/generated/pto_asm"
+fi
+
+OUT_DIR="${OUT_DIR:-$DEFAULT_OUT_DIR}"
 mkdir -p "$OUT_DIR"
 rm -f "$OUT_DIR"/*.s
 
 CXX="${CLANGXX:-${CLANG:-}}"
 if [[ -z "$CXX" ]]; then
-  CAND="$ROOT/compiler/llvm/build-linxisa-clang/bin/clang++"
-  if [[ -x "$CAND" ]]; then
-    CXX="$CAND"
-  else
-    CAND="$HOME/llvm-project/build-linxisa-clang/bin/clang++"
-    if [[ -x "$CAND" ]]; then
-      CXX="$CAND"
-    fi
+  if [[ -n "${LINXISA_ROOT:-}" && -x "$LINXISA_ROOT/compiler/llvm/build-linxisa-clang/bin/clang++" ]]; then
+    CXX="$LINXISA_ROOT/compiler/llvm/build-linxisa-clang/bin/clang++"
+  elif [[ -x "$HOME/llvm-project/build-linxisa-clang/bin/clang++" ]]; then
+    CXX="$HOME/llvm-project/build-linxisa-clang/bin/clang++"
   fi
 fi
 if [[ -z "$CXX" || ! -x "$CXX" ]]; then
-  echo "error: clang++ not found; set CLANG=/path/to/clang++" >&2
+  echo "error: clang++ not found; set CLANG or CLANGXX" >&2
   exit 1
 fi
 
@@ -33,7 +47,7 @@ COMMON_FLAGS=(
   -fno-exceptions
   -fno-rtti
   -nostdlib
-  -I"$ROOT/lib/pto/include"
+  -I"$PTO_ROOT/include"
 )
 
 compile_one() {
@@ -73,26 +87,6 @@ check_no_forbidden_tokens() {
   local forbidden_re='((^|[^A-Za-z0-9_])L\.|set_flag|wait_flag|TSync|B\.SET|B\.WAIT)'
   if grep -Eiq "$forbidden_re" "$asm"; then
     echo "error: forbidden v0.3 or non-auto-mode token found in $asm" >&2
-    exit 1
-  fi
-}
-
-check_tile_group_coverage() {
-  local asm="$1"
-  if ! has_tile_range "$asm" 0 7 && ! has_tile_hand "$asm" t; then
-    echo "error: missing T tile-group usage (tile0..tile7) in $asm" >&2
-    exit 1
-  fi
-  if ! has_tile_range "$asm" 8 15 && ! has_tile_hand "$asm" u; then
-    echo "error: missing U tile-group usage (tile8..tile15) in $asm" >&2
-    exit 1
-  fi
-  if ! has_tile_range "$asm" 16 23 && ! has_tile_hand "$asm" m; then
-    echo "error: missing M tile-group usage (tile16..tile23) in $asm" >&2
-    exit 1
-  fi
-  if ! has_tile_range "$asm" 24 31 && ! has_tile_hand "$asm" n; then
-    echo "error: missing N tile-group usage (tile24..tile31) in $asm" >&2
     exit 1
   fi
 }
@@ -146,13 +140,14 @@ KERNELS=(
 )
 
 for kernel in "${KERNELS[@]}"; do
-  compile_one "$ROOT/workloads/pto_kernels/${kernel}.cpp" "$OUT_DIR/${kernel}.s"
+  compile_one "$KERNEL_ROOT/${kernel}.cpp" "$OUT_DIR/${kernel}.s"
 done
 
 for kernel in "${KERNELS[@]}"; do
   asm="$OUT_DIR/${kernel}.s"
   check_no_forbidden_tokens "$asm"
   check_tma_descriptor_headers "$asm"
+
 done
 
 grep -qE "BSTART\\.TLOAD|BSTART\\.(TMA|PAR)[[:space:]]+TLOAD" "$OUT_DIR/tload_store.s"
@@ -166,6 +161,10 @@ grep -qE "BSTART\\.TMATMUL|BSTART\\.(CUBE|PAR)[[:space:]]+MAMULB," "$OUT_DIR/fla
 grep -qE "BSTART\\.TEPL|BSTART\\.TEXPANDS|BSTART\\.TCOLEXPAND" "$OUT_DIR/flash_attention_masked.s"
 
 if [[ "${RUN_QEMU_TILE:-0}" == "1" ]]; then
+  if [[ -z "${LINXISA_ROOT:-}" || ! -f "$LINXISA_ROOT/avs/qemu/run_tests.py" ]]; then
+    echo "error: RUN_QEMU_TILE=1 requires LINXISA_ROOT with avs/qemu/run_tests.py" >&2
+    exit 1
+  fi
   CLANG_C="${QEMU_CLANG:-$(cd "$(dirname "$CXX")" && pwd)/clang}"
   if [[ ! -x "$CLANG_C" ]]; then
     CLANG_C="$CXX"
@@ -184,7 +183,7 @@ if [[ "${RUN_QEMU_TILE:-0}" == "1" ]]; then
   if [[ -n "$QEMU_BIN" && -x "$QEMU_BIN" ]]; then
     QEMU_ARGS+=(--qemu "$QEMU_BIN")
   fi
-  CLANG="$CLANG_C" CLANGXX="$CXX" python3 "$ROOT/avs/qemu/run_tests.py" \
+  CLANG="$CLANG_C" CLANGXX="$CXX" python3 "$LINXISA_ROOT/avs/qemu/run_tests.py" \
     --suite tile --timeout "${QEMU_TIMEOUT:-60}" \
     "${QEMU_ARGS[@]}" \
     --require-test-id 0x000A0001 \
@@ -200,7 +199,8 @@ if [[ "${RUN_QEMU_TILE:-0}" == "1" ]]; then
 fi
 
 if [[ "${RUN_PTO_PARITY:-0}" == "1" ]]; then
-  python3 "$ROOT/tools/pto/run_pto_kernel_parity.py" --timeout "${PTO_PARITY_TIMEOUT:-180}"
+  LINXISA_ROOT="$LINXISA_ROOT" python3 "$PTO_ROOT/tools/run_pto_kernel_parity.py" \
+    --timeout "${PTO_PARITY_TIMEOUT:-180}"
 fi
 
 echo "ok: generated PTO->Linx v0.3 assembly in $OUT_DIR"

@@ -22,7 +22,8 @@ Kernels:
 - `mla_attention_demo.cpp`
 
 All kernels:
-- include `common/pto_tileop.hpp` from `lib/pto/include`,
+- include `common/pto_tileop.hpp` from `workloads/pto_kernels/include` (when
+  mounted as LinxISA submodule),
 - use `global_tensor` + `global_iterator` addressing for TLOAD/TSTORE shape/stride inference,
 - iterate over large tensors with nested tile loops,
 - obey strict tile-byte legality (`<=4KB`) for both tile descriptors and TMATMUL footprints using
@@ -36,7 +37,8 @@ Runtime profile policy:
 - masked kernels keep non-zero remainder paths in smoke profile.
 
 Parity gate:
-- host-vs-QEMU parity runner: `/Users/zhoubot/linx-isa/tools/pto/run_pto_kernel_parity.py`
+- host-vs-QEMU parity runner:
+  `/Users/zhoubot/linx-isa/workloads/pto_kernels/tools/run_pto_kernel_parity.py`
 - report artifacts:
   - `/Users/zhoubot/linx-isa/workloads/generated/pto_kernel_parity_latest.json`
   - `/Users/zhoubot/linx-isa/workloads/generated/pto_kernel_parity_latest.md`

@@ -13,8 +13,7 @@ import sys
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve()
-REPO_ROOT = SCRIPT.parents[2]
-OUT_DIR = REPO_ROOT / "workloads" / "generated"
+PTO_ROOT = SCRIPT.parents[1]
 
 KERNEL_NAMES = [
     "tload_store",
@@ -32,23 +31,27 @@ KERNEL_NAMES = [
     "mla_attention_demo",
 ]
 
-KERNEL_SOURCES = [
-    "workloads/pto_kernels/tload_store.cpp",
-    "workloads/pto_kernels/mamulb.cpp",
-    "workloads/pto_kernels/tmatmul_acc.cpp",
-    "workloads/pto_kernels/gemm.cpp",
-    "workloads/pto_kernels/gemm_basic.cpp",
-    "workloads/pto_kernels/gemm_demo.cpp",
-    "workloads/pto_kernels/gemm_performance.cpp",
-    "workloads/pto_kernels/add_custom.cpp",
-    "workloads/pto_kernels/flash_attention.cpp",
-    "workloads/pto_kernels/flash_attention_demo.cpp",
-    "workloads/pto_kernels/flash_attention_masked.cpp",
-    "workloads/pto_kernels/fa_performance.cpp",
-    "workloads/pto_kernels/mla_attention_demo.cpp",
-]
-
 DIGEST_RE = re.compile(r"PTO_DIGEST\s+([A-Za-z0-9_]+)\s+0x([0-9A-Fa-f]+)")
+
+
+def is_linxisa_root(path: Path) -> bool:
+    return (path / "avs" / "qemu" / "run_tests.py").exists() and (
+        path / "workloads" / "generated"
+    ).exists()
+
+
+def detect_linxisa_root() -> Path | None:
+    env = os.environ.get("LINXISA_ROOT")
+    if env:
+        p = Path(env).expanduser().resolve()
+        if is_linxisa_root(p):
+            return p
+        raise SystemExit(f"error: LINXISA_ROOT is not a valid linx-isa root: {p}")
+
+    for anc in PTO_ROOT.parents:
+        if is_linxisa_root(anc):
+            return anc
+    return None
 
 
 def run(
@@ -58,7 +61,7 @@ def run(
     env: dict[str, str] | None = None,
     timeout: float | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    p = subprocess.run(
+    return subprocess.run(
         cmd,
         cwd=str(cwd) if cwd else None,
         env=env,
@@ -68,7 +71,6 @@ def run(
         timeout=timeout,
         check=False,
     )
-    return p
 
 
 def parse_digests(text: str) -> dict[str, str]:
@@ -90,7 +92,7 @@ def host_compiler_works(compiler: str) -> bool:
     return p.returncode == 0
 
 
-def pick_clangxx() -> str:
+def pick_clangxx(linxisa_root: Path | None) -> str:
     env = os.environ.get("CLANGXX")
     if env:
         if host_compiler_works(env):
@@ -108,9 +110,10 @@ def pick_clangxx() -> str:
     if cxx:
         candidates.append(cxx)
 
-    local = REPO_ROOT / "compiler" / "llvm" / "build-linxisa-clang" / "bin" / "clang++"
-    if local.exists():
-        candidates.append(str(local))
+    if linxisa_root:
+        local = linxisa_root / "compiler" / "llvm" / "build-linxisa-clang" / "bin" / "clang++"
+        if local.exists():
+            candidates.append(str(local))
 
     for cand in candidates:
         if host_compiler_works(cand):
@@ -122,18 +125,29 @@ def pick_clangxx() -> str:
     )
 
 
-def build_and_run_host(clangxx: str, host_bin: Path) -> tuple[dict[str, str], str]:
-    sources = [
-        str(REPO_ROOT / "avs/qemu/tests/16_pto_kernel_parity.cpp"),
-        *[str(REPO_ROOT / s) for s in KERNEL_SOURCES],
-    ]
+def kernel_sources(linxisa_root: Path | None) -> list[Path]:
+    if linxisa_root:
+        base = linxisa_root / "workloads" / "pto_kernels" / "kernels"
+    else:
+        base = PTO_ROOT / "kernels"
+    return [base / f"{name}.cpp" for name in KERNEL_NAMES]
+
+
+def build_and_run_host(clangxx: str, host_bin: Path, linxisa_root: Path) -> tuple[dict[str, str], str]:
+    harness = linxisa_root / "avs" / "qemu" / "tests" / "16_pto_kernel_parity.cpp"
+    include_dir = linxisa_root / "workloads" / "pto_kernels" / "include"
+
+    if not harness.exists():
+        raise SystemExit(f"error: missing parity harness: {harness}")
+
+    sources = [str(harness), *[str(p) for p in kernel_sources(linxisa_root)]]
     cmd = [
         clangxx,
         "-std=c++17",
         "-O2",
         "-DPTO_HOST_SIM=1",
         "-DPTO_QEMU_SMOKE=1",
-        f"-I{REPO_ROOT / 'lib/pto/include'}",
+        f"-I{include_dir}",
         *sources,
         "-o",
         str(host_bin),
@@ -153,10 +167,10 @@ def build_and_run_host(clangxx: str, host_bin: Path) -> tuple[dict[str, str], st
     return parse_digests(text), text
 
 
-def run_qemu_suite(timeout_s: float) -> tuple[dict[str, str], str, list[str]]:
+def run_qemu_suite(linxisa_root: Path, timeout_s: float) -> tuple[dict[str, str], str, list[str]]:
     cmd = [
         "python3",
-        str(REPO_ROOT / "avs/qemu/run_tests.py"),
+        str(linxisa_root / "avs" / "qemu" / "run_tests.py"),
         "--suite",
         "pto_parity",
         "--timeout",
@@ -165,7 +179,7 @@ def run_qemu_suite(timeout_s: float) -> tuple[dict[str, str], str, list[str]]:
     ]
     compile_and_run_timeout = timeout_s + 120.0
     try:
-        p = run(cmd, cwd=REPO_ROOT, timeout=compile_and_run_timeout)
+        p = run(cmd, cwd=linxisa_root, timeout=compile_and_run_timeout)
     except subprocess.TimeoutExpired as exc:
         out = (exc.stdout or "") + "\n" + (exc.stderr or "")
         if out:
@@ -181,10 +195,10 @@ def run_qemu_suite(timeout_s: float) -> tuple[dict[str, str], str, list[str]]:
     return parse_digests(text), text, cmd
 
 
-def write_reports(host: dict[str, str], qemu: dict[str, str], qemu_cmd: list[str], host_log: str, qemu_log: str) -> tuple[Path, Path, bool]:
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    json_path = OUT_DIR / "pto_kernel_parity_latest.json"
-    md_path = OUT_DIR / "pto_kernel_parity_latest.md"
+def write_reports(host: dict[str, str], qemu: dict[str, str], qemu_cmd: list[str], host_log: str, qemu_log: str, out_dir: Path) -> tuple[Path, Path, bool]:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    json_path = out_dir / "pto_kernel_parity_latest.json"
+    md_path = out_dir / "pto_kernel_parity_latest.md"
 
     rows = []
     ok = True
@@ -252,13 +266,23 @@ def write_reports(host: dict[str, str], qemu: dict[str, str], qemu_cmd: list[str
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Run PTO kernel parity (host-sim vs QEMU).")
     parser.add_argument("--timeout", type=float, default=180.0, help="QEMU timeout seconds")
+    parser.add_argument("--out-dir", default=None, help="Optional report output directory")
     args = parser.parse_args(argv)
 
-    clangxx = pick_clangxx()
-    host_bin = OUT_DIR / "pto_kernel_parity_host"
+    linxisa_root = detect_linxisa_root()
+    if linxisa_root is None:
+        raise SystemExit(
+            "error: this parity runner requires a linx-isa integration root. "
+            "Set LINXISA_ROOT when running outside the superproject."
+        )
 
-    host_digests, host_log = build_and_run_host(clangxx, host_bin)
-    qemu_digests, qemu_log, qemu_cmd = run_qemu_suite(args.timeout)
+    out_dir = Path(args.out_dir).expanduser().resolve() if args.out_dir else linxisa_root / "workloads" / "generated"
+
+    clangxx = pick_clangxx(linxisa_root)
+    host_bin = out_dir / "pto_kernel_parity_host"
+
+    host_digests, host_log = build_and_run_host(clangxx, host_bin, linxisa_root)
+    qemu_digests, qemu_log, qemu_cmd = run_qemu_suite(linxisa_root, args.timeout)
 
     json_path, md_path, ok = write_reports(
         host_digests,
@@ -266,6 +290,7 @@ def main(argv: list[str]) -> int:
         qemu_cmd,
         host_log,
         qemu_log,
+        out_dir,
     )
 
     print(f"wrote {json_path}")
