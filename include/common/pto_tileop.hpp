@@ -276,7 +276,8 @@ constexpr unsigned TMAX = 0x004u;
 constexpr unsigned TCVT = 0x00fu;
 constexpr unsigned TROWMAX = 0x020u;
 constexpr unsigned TROWSUM = 0x022u;
-constexpr unsigned TCOLEXPAND = 0x027u;
+constexpr unsigned TCOLEXPAND = 0x0C0u;
+constexpr unsigned TROWEXPAND = 0x0C1u;
 constexpr unsigned TEXP = 0x040u;
 constexpr unsigned TRECIP = 0x044u;
 constexpr unsigned TEXPANDS = 0x045u;
@@ -430,6 +431,14 @@ inline void TEXPANDS(DstTile &dst, Scalar scalar) {
 template <typename DstTile, typename SrcTile>
 inline void TCOLEXPAND(DstTile &dst, const SrcTile &src) {
   dst.raw() = linx::detail::teplUnary<tepl::TCOLEXPAND,
+                                      detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(
+      src.raw());
+}
+
+template <typename DstTile, typename SrcTile>
+inline void TROWEXPAND(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::TROWEXPAND,
                                       detail::tileSizeCode<DstTile>(),
                                       detail::tileDTypeCode<DstTile>()>(
       src.raw());
