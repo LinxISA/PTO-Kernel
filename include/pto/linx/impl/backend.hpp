@@ -250,7 +250,8 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems) {
     break;
   case 0x020u: // TROWMAX (fallback: identity under host backend)
   case 0x022u: // TROWSUM (fallback: identity under host backend)
-  case 0x027u: // TCOLEXPAND (fallback: identity under host backend)
+  case 0x0c0u: // TCOLEXPAND (fallback: identity under host backend)
+  case 0x0c1u: // TROWEXPAND (fallback: identity under host backend)
     for (unsigned i = 0; i < elems && i < kTileWords; ++i)
       out.words[i] = src.words[i];
     break;
