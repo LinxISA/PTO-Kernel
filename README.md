@@ -1,43 +1,35 @@
-# PTO-Kernel
+# PTO Kernels
 
-PTO-Kernel is the LinxISA tile-kernel repository for high-performance AI, HPC,
-rendering, and math workloads.
+## Scope
+`workloads/pto_kernels` is the LinxISA PTO tile-kernel workspace for kernel sources, tooling, and host-side validation flows.
 
-This repository hosts:
-- PTO tile kernels (`kernels/`)
-- PTO kernel tooling (`tools/`)
-- Public PTO headers used by Linx tile kernels (`include/`)
-- Domain API scaffolding (`include/pto/domains/`)
-- Tile flow contracts and roadmap docs (`docs/`)
-- Local development tests (`tests/`)
+## Upstream
+- Repository: `https://github.com/LinxISA/PTO-Kernel`
+- Merge-back target branch: `main`
 
-## Repository layout
+## What This Submodule Owns
+- PTO kernel sources (`kernels/`)
+- Public PTO headers (`include/`)
+- Kernel/tooling/test scaffolding (`tools/`, `tests/`, `docs/`)
 
-- `include/`: public headers consumed by PTO kernels and integration tests
-- `kernels/`: reference PTO kernels (GEMM, flash-attention, tile load/store, etc.)
-- `tools/`: compile, parity, and asm-generation scripts
-- `tests/`: host smoke tests and asm contract checks
-- `docs/contracts/`: ISA/LLVM/QEMU alignment contracts for tile flow
-- `docs/roadmap/`: staged LinxCore alignment plan
-- `third_party/lib_pto/`: upstream licensing and notices for vendored PTO content
-
-## Build (host smoke)
+## Canonical Build and Test Commands
+Run from `/Users/zhoubot/linx-isa/workloads/pto_kernels`.
 
 ```bash
 cmake -S . -B build
-cmake --build build
+cmake --build build -j"$(sysctl -n hw.ncpu 2>/dev/null || nproc)"
 ctest --test-dir build --output-on-failure
-```
 
-## Build (Linx cross asm checks)
-
-```bash
 cmake -S . -B build-linx -DPTO_ENABLE_LINX_CROSS=ON
 cmake --build build-linx --target pto_linx_contracts
 ```
 
-## Integration in LinxISA superproject
+## LinxISA Integration Touchpoints
+- Submodule pinned by the superproject for PTO kernel bring-up
+- Consumed by Linx tile flow contracts and integration tests
+- Tooling and artifacts integrated with LinxISA AVS/runtime workflows
 
-When mounted as `workloads/pto_kernels` submodule inside `linx-isa`, scripts
-default to writing generated artifacts to `linx-isa/workloads/generated/` and
-consume AVS/QEMU integration from the superproject.
+## Related Docs
+- `/Users/zhoubot/linx-isa/docs/project/navigation.md`
+- `/Users/zhoubot/linx-isa/docs/bringup/`
+- `/Users/zhoubot/linx-isa/workloads/pto_kernels/docs/`
