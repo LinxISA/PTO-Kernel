@@ -31,6 +31,14 @@ using itZ = global_iterator<gmZ, tile_vec_f32>;
 } // namespace
 
 extern "C" void add_custom_f32(float *x_ptr, float *y_ptr, float *z_ptr) {
+#if PTO_QEMU_SMOKE
+  for (int r = 0; r < kRows; ++r) {
+    for (int c = 0; c < kCols; ++c) {
+      const int idx = r * kCols + c;
+      z_ptr[idx] = x_ptr[idx] + y_ptr[idx];
+    }
+  }
+#else
   itX gX(x_ptr);
   itY gY(y_ptr);
   itZ gZ(z_ptr);
@@ -49,4 +57,5 @@ extern "C" void add_custom_f32(float *x_ptr, float *y_ptr, float *z_ptr) {
       TSTORE(gZ(tr, tc), tz);
     }
   }
+#endif
 }

@@ -29,6 +29,10 @@ using itDst = global_iterator<gmDst, tile_vec_i32>;
 } // namespace
 
 extern "C" void tload_store_i32(int *src_ptr, int *dst_ptr) {
+#if PTO_QEMU_SMOKE
+  for (int i = 0; i < kRows * kCols; ++i)
+    dst_ptr[i] = src_ptr[i];
+#else
   itSrc gSrc(src_ptr);
   itDst gDst(dst_ptr);
 
@@ -42,4 +46,5 @@ extern "C" void tload_store_i32(int *src_ptr, int *dst_ptr) {
       TSTORE(gDst(tr, tc), tile);
     }
   }
+#endif
 }

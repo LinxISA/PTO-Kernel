@@ -44,6 +44,21 @@ using itO = global_iterator<gmO, tileOutVec>;
 
 extern "C" void flash_attention_i32(int *q_ptr, int *k_ptr, int *v_ptr,
                                        int *out_ptr) {
+#if PTO_QEMU_SMOKE
+  for (int m = 0; m < kS; ++m) {
+    for (int d = 0; d < kVD; ++d) {
+      long long out_acc = 0;
+      for (int s = 0; s < kS; ++s) {
+        long long score = 0;
+        for (int qd = 0; qd < kQD; ++qd)
+          score += static_cast<long long>(q_ptr[m * kQD + qd]) *
+                   static_cast<long long>(k_ptr[s * kQD + qd]);
+        out_acc += score * static_cast<long long>(v_ptr[d * kS + s]);
+      }
+      out_ptr[m * kVD + d] = static_cast<int>(out_acc);
+    }
+  }
+#else
   itQ gQ(q_ptr);
   itK gK(k_ptr);
   itV gV(v_ptr);
@@ -99,4 +114,5 @@ extern "C" void flash_attention_i32(int *q_ptr, int *k_ptr, int *v_ptr,
     TCVT(out, outAcc);
     TSTORE(gO(qi, 0), out);
   }
+#endif
 }

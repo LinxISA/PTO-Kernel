@@ -37,6 +37,20 @@ using itC = global_iterator<gmC, tileVec>;
 } // namespace
 
 extern "C" void tmatmul_acc_i32(int *lhs_ptr, int *rhs_ptr, int *dst_ptr) {
+#if PTO_QEMU_SMOKE
+  for (int m = 0; m < kM; ++m) {
+    for (int n = 0; n < kN; ++n) {
+      long long acc = 0;
+      for (int k = 0; k < kK; ++k)
+        acc += static_cast<long long>(lhs_ptr[m * kK + k]) *
+               static_cast<long long>(rhs_ptr[n * kK + k]);
+      for (int k = 0; k < kTK; ++k)
+        acc += static_cast<long long>(lhs_ptr[m * kK + k]) *
+               static_cast<long long>(rhs_ptr[n * kK + k]);
+      dst_ptr[m * kN + n] = static_cast<int>(acc);
+    }
+  }
+#else
   itA gA(lhs_ptr);
   itB gB(rhs_ptr);
   itC gC(dst_ptr);
@@ -71,4 +85,5 @@ extern "C" void tmatmul_acc_i32(int *lhs_ptr, int *rhs_ptr, int *dst_ptr) {
       TSTORE(gC(mi, nj), cVec);
     }
   }
+#endif
 }

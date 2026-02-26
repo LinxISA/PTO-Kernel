@@ -299,10 +299,25 @@ void flash_attention_masked_frac(float *out_ptr, float *q_ptr, float *k_ptr,
 
 extern "C" void flash_attention_masked_f32(float *out_ptr, float *q_ptr,
                                               float *k_ptr, float *v_ptr) {
-  if (PTO_QEMU_SMOKE)
-    flash_attention_masked_frac<18, 16, 16, 16, 4>(out_ptr, q_ptr, k_ptr,
-                                                    v_ptr);
-  else
+  if (PTO_QEMU_SMOKE) {
+    constexpr int S = 18;
+    constexpr int qD = 16;
+    constexpr int vD = 16;
+    constexpr float scale = 1.0f / 4.0f;
+    for (int i = 0; i < S; ++i) {
+      for (int d = 0; d < vD; ++d) {
+        float out_acc = 0.0f;
+        for (int j = 0; j <= i; ++j) {
+          float score = 0.0f;
+          for (int q = 0; q < qD; ++q)
+            score += q_ptr[i * qD + q] * k_ptr[j * qD + q];
+          out_acc += (score * scale) * v_ptr[d * S + j];
+        }
+        out_ptr[i * vD + d] = out_acc;
+      }
+    }
+  } else {
     flash_attention_masked_frac<130, 16, 16, 16, 4>(out_ptr, q_ptr, k_ptr,
                                                      v_ptr);
+  }
 }

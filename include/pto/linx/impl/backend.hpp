@@ -2,10 +2,12 @@
 #define PTO_LINX_IMPL_BACKEND_HPP
 
 #include <stdint.h>
+#include <type_traits>
 #if defined(PTO_HOST_SIM)
 #include <math.h>
 #include <string.h>
 #endif
+#include <common/linx_lowp_types.hpp>
 
 namespace pto {
 namespace linx {
@@ -48,6 +50,21 @@ struct is_arithmetic<float> {
 
 template <>
 struct is_arithmetic<double> {
+  static constexpr bool value = true;
+};
+
+template <>
+struct is_arithmetic<pto::fp16_t> {
+  static constexpr bool value = true;
+};
+
+template <>
+struct is_arithmetic<pto::fp8_e4m3_t> {
+  static constexpr bool value = true;
+};
+
+template <>
+struct is_arithmetic<pto::fp4_e2m1_t> {
   static constexpr bool value = true;
 };
 
@@ -101,6 +118,15 @@ struct DTypeCode<unsigned long long> { static constexpr unsigned value = 24u; };
 
 template <>
 struct DTypeCode<double> { static constexpr unsigned value = 0u; };
+
+template <>
+struct DTypeCode<pto::fp16_t> { static constexpr unsigned value = 2u; };
+
+template <>
+struct DTypeCode<pto::fp8_e4m3_t> { static constexpr unsigned value = 3u; };
+
+template <>
+struct DTypeCode<pto::fp4_e2m1_t> { static constexpr unsigned value = 11u; };
 
 constexpr unsigned kMinTileBytes = 512u;
 constexpr unsigned kMaxTileBytes = 4096u;
@@ -186,6 +212,13 @@ template <typename Scalar>
 inline long long encodeScalar(Scalar value) {
   static_assert(is_arithmetic<Scalar>::value,
                 "PTO Linx strict-v0.3: scalar operand must be arithmetic");
+  if constexpr (std::is_same<Scalar, pto::fp16_t>::value) {
+    return static_cast<long long>(value.bits);
+  } else if constexpr (std::is_same<Scalar, pto::fp8_e4m3_t>::value) {
+    return static_cast<long long>(value.bits);
+  } else if constexpr (std::is_same<Scalar, pto::fp4_e2m1_t>::value) {
+    return static_cast<long long>(value.bits & 0x0fu);
+  }
   if constexpr (is_floating_point<Scalar>::value) {
     if constexpr (sizeof(Scalar) == sizeof(uint32_t)) {
       union {
@@ -237,7 +270,46 @@ inline int32_t scalarAsI32(long long scalar_bits) {
   return static_cast<int32_t>(scalar_bits & 0xffffffffull);
 }
 
-template <unsigned TileOp10>
+inline uint32_t scalarToWordDType(long long scalar_bits, unsigned dtype) {
+  switch (dtype & 0x1fu) {
+  case 2u:
+    return static_cast<uint32_t>(static_cast<uint16_t>(scalar_bits & 0xffffu));
+  case 3u:
+    return static_cast<uint32_t>(static_cast<uint8_t>(scalar_bits & 0xffu));
+  case 11u:
+    return static_cast<uint32_t>(static_cast<uint8_t>(scalar_bits & 0x0fu));
+  default:
+    return static_cast<uint32_t>(scalar_bits & 0xffffffffu);
+  }
+}
+
+inline uint32_t quantizeF32ToWord(float x, unsigned dtype) {
+  switch (dtype & 0x1fu) {
+  case 2u:
+    return pto::lowp_word_from_fp16(pto::float_to_fp16(x));
+  case 3u:
+    return pto::lowp_word_from_fp8(pto::float_to_fp8_e4m3(x));
+  case 11u:
+    return pto::lowp_word_from_fp4(pto::float_to_fp4_e2m1(x));
+  default:
+    return bitCastToU32<float>(x);
+  }
+}
+
+inline float dequantWordToF32(uint32_t word, unsigned dtype) {
+  switch (dtype & 0x1fu) {
+  case 2u:
+    return pto::fp16_to_float(pto::fp16_from_lowp_word(word));
+  case 3u:
+    return pto::fp8_e4m3_to_float(pto::fp8_from_lowp_word(word));
+  case 11u:
+    return pto::fp4_e2m1_to_float(pto::fp4_from_lowp_word(word));
+  default:
+    return bitCastFromU32<float>(word);
+  }
+}
+
+template <unsigned TileOp10, unsigned DType>
 inline RawTile teplUnaryHost(const RawTile &src, unsigned elems) {
   RawTile out{};
   for (unsigned i = 0; i < kTileWords; ++i)
@@ -245,8 +317,10 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems) {
 
   switch (TileOp10 & 0x3ffu) {
   case 0x00fu: // TCVT
-    for (unsigned i = 0; i < elems && i < kTileWords; ++i)
-      out.words[i] = src.words[i];
+    for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
+      const float f = dequantWordToF32(src.words[i], DType);
+      out.words[i] = quantizeF32ToWord(f, DType);
+    }
     break;
   case 0x020u: // TROWMAX (fallback: identity under host backend)
   case 0x022u: // TROWSUM (fallback: identity under host backend)
@@ -257,15 +331,15 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems) {
     break;
   case 0x040u: // TEXP
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
-      float f = bitCastFromU32<float>(src.words[i]);
-      out.words[i] = bitCastToU32<float>(expf(f));
+      const float f = dequantWordToF32(src.words[i], DType);
+      out.words[i] = quantizeF32ToWord(expf(f), DType);
     }
     break;
   case 0x044u: // TRECIP
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
-      float f = bitCastFromU32<float>(src.words[i]);
+      const float f = dequantWordToF32(src.words[i], DType);
       float inv = (f == 0.0f) ? 0.0f : (1.0f / f);
-      out.words[i] = bitCastToU32<float>(inv);
+      out.words[i] = quantizeF32ToWord(inv, DType);
     }
     break;
   default:
@@ -275,7 +349,7 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems) {
   return out;
 }
 
-template <unsigned TileOp10>
+template <unsigned TileOp10, unsigned DType>
 inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs, unsigned elems) {
   RawTile out{};
   for (unsigned i = 0; i < kTileWords; ++i)
@@ -283,26 +357,32 @@ inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs, unsigned e
 
   switch (TileOp10 & 0x3ffu) {
   case 0x000u: // TADD
-    for (unsigned i = 0; i < elems && i < kTileWords; ++i)
-      out.words[i] = lhs.words[i] + rhs.words[i];
+    for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
+      const float a = dequantWordToF32(lhs.words[i], DType);
+      const float b = dequantWordToF32(rhs.words[i], DType);
+      out.words[i] = quantizeF32ToWord(a + b, DType);
+    }
     break;
   case 0x001u: // TSUB
-    for (unsigned i = 0; i < elems && i < kTileWords; ++i)
-      out.words[i] = lhs.words[i] - rhs.words[i];
+    for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
+      const float a = dequantWordToF32(lhs.words[i], DType);
+      const float b = dequantWordToF32(rhs.words[i], DType);
+      out.words[i] = quantizeF32ToWord(a - b, DType);
+    }
     break;
   case 0x002u: { // TMUL
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
-      float a = bitCastFromU32<float>(lhs.words[i]);
-      float b = bitCastFromU32<float>(rhs.words[i]);
-      out.words[i] = bitCastToU32<float>(a * b);
+      const float a = dequantWordToF32(lhs.words[i], DType);
+      const float b = dequantWordToF32(rhs.words[i], DType);
+      out.words[i] = quantizeF32ToWord(a * b, DType);
     }
     break;
   }
   case 0x004u: { // TMAX
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
-      float a = bitCastFromU32<float>(lhs.words[i]);
-      float b = bitCastFromU32<float>(rhs.words[i]);
-      out.words[i] = bitCastToU32<float>(a > b ? a : b);
+      const float a = dequantWordToF32(lhs.words[i], DType);
+      const float b = dequantWordToF32(rhs.words[i], DType);
+      out.words[i] = quantizeF32ToWord(a > b ? a : b, DType);
     }
     break;
   }
@@ -544,7 +624,7 @@ inline RawTile teplUnary(RawTile src) {
       (bytes64 == 0 || bytes64 > kMaxTileBytes || elem_bytes == 0)
           ? 0u
           : dtypeElemCountForBytes(bytes64, DType);
-  return teplUnaryHost<TileOp10>(src, elems);
+  return teplUnaryHost<TileOp10, DType>(src, elems);
 #else
   return __builtin_linx_tepl_unary(src, TileOp10, SizeCode, DType);
 #endif
@@ -563,7 +643,7 @@ inline RawTile teplBinary(RawTile lhs, RawTile rhs) {
       (bytes64 == 0 || bytes64 > kMaxTileBytes || elem_bytes == 0)
           ? 0u
           : dtypeElemCountForBytes(bytes64, DType);
-  return teplBinaryHost<TileOp10>(lhs, rhs, elems);
+  return teplBinaryHost<TileOp10, DType>(lhs, rhs, elems);
 #else
   return __builtin_linx_tepl_binary(lhs, rhs, TileOp10, SizeCode, DType);
 #endif
@@ -587,10 +667,10 @@ inline RawTile teplBinaryScalar(RawTile lhs, Scalar scalar) {
           ? 0u
           : dtypeElemCountForBytes(bytes64, DType);
   const long long bits = encodeScalar(scalar);
-  const uint32_t scalar_word = static_cast<uint32_t>(bits & 0xffffffffull);
+  const uint32_t scalar_word = scalarToWordDType(bits, DType);
   for (unsigned i = 0; i < elems && i < kTileWords; ++i)
     rhs.words[i] = scalar_word;
-  return teplBinaryHost<TileOp10>(lhs, rhs, elems);
+  return teplBinaryHost<TileOp10, DType>(lhs, rhs, elems);
 #else
   return __builtin_linx_tepl_binary_scalar(lhs, encodeScalar(scalar), TileOp10,
                                            SizeCode, DType, Mode);
@@ -622,7 +702,7 @@ inline RawTile teplSplat(Scalar scalar) {
     return out;
 
   const long long bits = encodeScalar(scalar);
-  const uint32_t scalar_word = static_cast<uint32_t>(bits & 0xffffffffull);
+  const uint32_t scalar_word = scalarToWordDType(bits, DType);
   for (unsigned i = 0; i < elems && i < kTileWords; ++i)
     out.words[i] = scalar_word;
   return out;

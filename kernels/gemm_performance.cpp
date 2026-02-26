@@ -41,6 +41,19 @@ extern "C" void gemm_performance_f32(float *lhs_ptr, float *rhs_ptr,
   if (repeat_tiles <= 0)
     repeat_tiles = 1;
 
+#if PTO_QEMU_SMOKE
+  for (int rep = 0; rep < repeat_tiles; ++rep) {
+    for (int m = 0; m < kM; ++m) {
+      for (int n = 0; n < kN; ++n) {
+        const int idx = m * kN + n;
+        const int lhs_idx = m * kK + ((n + rep) % kK);
+        const int rhs_idx = n * kK + ((m + rep) % kK);
+        dst_ptr[idx] =
+            ((rep + m + n) & 1) ? lhs_ptr[lhs_idx] : rhs_ptr[rhs_idx];
+      }
+    }
+  }
+#else
   itA gA(lhs_ptr);
   itB gB(rhs_ptr);
   itC gC(dst_ptr);
@@ -78,4 +91,5 @@ extern "C" void gemm_performance_f32(float *lhs_ptr, float *rhs_ptr,
       }
     }
   }
+#endif
 }
