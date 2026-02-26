@@ -8,10 +8,10 @@ struct ShadingTileProfile {
   int height;
 };
 
-// Early rendering kernels typically use 32x32 element tiles to match 4KB tiles for
-// common 32-bit element formats (float32, packed RGBA8-in-u32).
+// Early rendering kernels use a single-column 1024-element tile (1024x1) to match
+// the 4KB RawTile carrier for common 32-bit element formats.
 inline constexpr ShadingTileProfile default_shading_profile() {
-  return {32, 32};
+  return {1, 1024};
 }
 
 // Rendering-oriented tile/type conventions.
