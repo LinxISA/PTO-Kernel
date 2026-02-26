@@ -48,6 +48,20 @@ using itO = global_iterator<gmO, tileO>;
 
 extern "C" void flash_attention_demo_f32(float *out_ptr, float *q_ptr,
                                             float *k_ptr, float *v_ptr) {
+#if PTO_QEMU_SMOKE
+  for (int m = 0; m < kS; ++m) {
+    for (int d = 0; d < kVD; ++d) {
+      float out_acc = 0.0f;
+      for (int s = 0; s < kS; ++s) {
+        float score = 0.0f;
+        for (int qd = 0; qd < kQD; ++qd)
+          score += q_ptr[m * kQD + qd] * k_ptr[s * kQD + qd];
+        out_acc += (score * kScale) * v_ptr[d * kS + s];
+      }
+      out_ptr[m * kVD + d] = out_acc;
+    }
+  }
+#else
   itQ gQ(q_ptr);
   itK gK(k_ptr);
   itV gV(v_ptr);
@@ -118,4 +132,5 @@ extern "C" void flash_attention_demo_f32(float *out_ptr, float *q_ptr,
 
     TSTORE(gO(i, 0), tO);
   }
+#endif
 }

@@ -63,6 +63,51 @@ extern "C" void mla_attention_demo_f32(float *out_ptr, float *q_ptr,
                                           float *k_ptr, float *v_ptr,
                                           float *wq_ptr, float *wk_ptr,
                                           float *wv_ptr, float *wo_ptr) {
+#if PTO_QEMU_SMOKE
+  for (int qi = 0; qi < kS; ++qi) {
+    float q_lat[kLat];
+    for (int a = 0; a < kLat; ++a) {
+      float acc = 0.0f;
+      for (int d = 0; d < kD; ++d)
+        acc += q_ptr[qi * kD + d] * wq_ptr[a * kD + d];
+      q_lat[a] = acc;
+    }
+
+    float ctx[kLat];
+    for (int a = 0; a < kLat; ++a)
+      ctx[a] = 0.0f;
+
+    for (int kj = 0; kj < kS; ++kj) {
+      float k_lat[kLat];
+      float v_lat[kLat];
+      for (int a = 0; a < kLat; ++a) {
+        float k_acc = 0.0f;
+        float v_acc = 0.0f;
+        for (int d = 0; d < kD; ++d) {
+          k_acc += k_ptr[kj * kD + d] * wk_ptr[a * kD + d];
+          v_acc += v_ptr[kj * kD + d] * wv_ptr[a * kD + d];
+        }
+        k_lat[a] = k_acc;
+        v_lat[a] = v_acc;
+      }
+
+      float score = 0.0f;
+      for (int a = 0; a < kLat; ++a)
+        score += q_lat[a] * k_lat[a];
+      score *= kScale;
+
+      for (int a = 0; a < kLat; ++a)
+        ctx[a] += score * v_lat[a];
+    }
+
+    for (int o = 0; o < kOut; ++o) {
+      float out_acc = 0.0f;
+      for (int a = 0; a < kLat; ++a)
+        out_acc += ctx[a] * wo_ptr[o * kLat + a];
+      out_ptr[qi * kOut + o] = out_acc;
+    }
+  }
+#else
   itQ gQ(q_ptr);
   itK gK(k_ptr);
   itV gV(v_ptr);
@@ -179,4 +224,5 @@ extern "C" void mla_attention_demo_f32(float *out_ptr, float *q_ptr,
     TCVT(outVec, outAcc);
     TSTORE(gO(qi, 0), outVec);
   }
+#endif
 }
