@@ -47,7 +47,7 @@ using ptrdiff_builtin_t = __PTRDIFF_TYPE__;
 template <typename... Ts>
 using void_t = void;
 
-// TMA format selectors used by B.ARG in strict v0.3.
+// TMA format selectors used by B.ARG in canonical v0.4.
 constexpr long long kLayoutNorm = 0ll;     // NORM.normal
 constexpr long long kLayoutND2NZ = 2ll;    // ND2NZ.normal
 constexpr long long kLayoutND2ZN = 3ll;    // ND2ZN.normal
@@ -60,14 +60,14 @@ constexpr unsigned tileBytes() {
   constexpr int cols = TileT::Cols;
   constexpr unsigned bytes =
       static_cast<unsigned>(rows * cols * sizeof(typename TileT::DType));
-  static_assert(bytes > 0u, "PTO Linx strict-v0.3: tile bytes must be positive");
+  static_assert(bytes > 0u, "PTO Linx canonical v0.4: tile bytes must be positive");
   return bytes;
 }
 
 template <typename TileT>
 constexpr unsigned tileSizeCode() {
   static_assert(tileBytes<TileT>() <= linx::detail::kMaxTileBytes,
-                "PTO Linx strict-v0.3: tile size exceeds 4KB");
+                "PTO Linx canonical v0.4: tile size exceeds 4KB");
   // Keep a single 4KB size profile in PR5 user-facing wrappers to avoid
   // cross-op metadata skew while strict Tile SSA balancing is enabled.
   return 8u;
@@ -200,7 +200,7 @@ struct Tile {
 
   template <typename Scalar>
   explicit Tile(Scalar scalar) {
-    raw_ = linx::detail::teplSplat<0x045u, detail::tileSizeCode<Tile>(),
+    raw_ = linx::detail::teplSplat<0x019u, detail::tileSizeCode<Tile>(),
                                    detail::tileDTypeCode<Tile>(), 2u>(scalar);
   }
 
@@ -272,15 +272,46 @@ namespace tepl {
 constexpr unsigned TADD = 0x000u;
 constexpr unsigned TSUB = 0x001u;
 constexpr unsigned TMUL = 0x002u;
+constexpr unsigned TDIV = 0x003u;
 constexpr unsigned TMAX = 0x004u;
-constexpr unsigned TCVT = 0x00fu;
-constexpr unsigned TROWMAX = 0x020u;
-constexpr unsigned TROWSUM = 0x022u;
-constexpr unsigned TCOLEXPAND = 0x0C0u;
-constexpr unsigned TROWEXPAND = 0x0C1u;
-constexpr unsigned TEXP = 0x040u;
-constexpr unsigned TRECIP = 0x044u;
-constexpr unsigned TEXPANDS = 0x045u;
+constexpr unsigned TMIN = 0x005u;
+constexpr unsigned TAND = 0x006u;
+constexpr unsigned TOR = 0x007u;
+constexpr unsigned TXOR = 0x008u;
+constexpr unsigned TSHL = 0x009u;
+constexpr unsigned TSHR = 0x00au;
+constexpr unsigned TRELU = 0x00bu;
+constexpr unsigned TPRELU = 0x00cu;
+constexpr unsigned TCVT = 0x00du;
+constexpr unsigned TEXP = 0x00eu;
+constexpr unsigned TLOG = 0x00fu;
+constexpr unsigned TSQRT = 0x010u;
+constexpr unsigned TRSQRT = 0x011u;
+constexpr unsigned TROWMAX = 0x012u;
+constexpr unsigned TROWMIN = 0x013u;
+constexpr unsigned TROWSUM = 0x014u;
+constexpr unsigned TCOLMAX = 0x015u;
+constexpr unsigned TCOLMIN = 0x016u;
+constexpr unsigned TCOLSUM = 0x017u;
+constexpr unsigned TRECIP = 0x018u;
+constexpr unsigned TEXPANDS = 0x019u;
+constexpr unsigned TGATHER = 0x01au;
+constexpr unsigned TSCATTER = 0x01bu;
+constexpr unsigned TRESHAPE = 0x01cu;
+constexpr unsigned TTRANSPOSE = 0x01du;
+constexpr unsigned TCOLEXPAND = 0x01eu;
+constexpr unsigned TROWEXPAND = 0x01fu;
+constexpr unsigned TADDS = 0x020u;
+constexpr unsigned TSUBS = 0x021u;
+constexpr unsigned TMULS = 0x022u;
+constexpr unsigned TDIVS = 0x023u;
+constexpr unsigned TMAXS = 0x024u;
+constexpr unsigned TMINS = 0x025u;
+constexpr unsigned TANDS = 0x026u;
+constexpr unsigned TORS = 0x027u;
+constexpr unsigned TXORS = 0x028u;
+constexpr unsigned TSHLS = 0x029u;
+constexpr unsigned TSHRS = 0x02au;
 } // namespace tepl
 
 // Core tile ops used by PR5 FlashAttention bring-up.
@@ -323,7 +354,7 @@ inline void TMOV(DstTile &dst, const SrcTile &src, unsigned mode = 0u) {
 
 template <typename TileRes, typename TileLeft_, typename TileRight_>
 inline void TMATMUL(TileRes &dst, const TileLeft_ &lhs, const TileRight_ &rhs) {
-  // Strict-v0.3 compiler policy:
+  // Canonical v0.4 compiler policy:
   // tile_bytes = ceil(m*n*k*elem_bits/8) must fit <=4KB
   // (m=Rows, n=Cols, k=lhs.Cols).
   constexpr unsigned M = static_cast<unsigned>(TileRes::Rows);
@@ -415,7 +446,7 @@ inline void TRECIP(DstTile &dst, const SrcTile &src) {
 
 template <typename DstTile, typename SrcTile, typename Scalar>
 inline void TMULS(DstTile &dst, const SrcTile &src, Scalar scalar) {
-  dst.raw() = linx::detail::teplBinaryScalar<tepl::TMUL,
+  dst.raw() = linx::detail::teplBinaryScalar<tepl::TMULS,
                                              detail::tileSizeCode<DstTile>(),
                                              detail::tileDTypeCode<DstTile>(), 1u>(
       src.raw(), scalar);
