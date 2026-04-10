@@ -1,6 +1,8 @@
 #ifndef PTO_DOMAINS_RENDERING_HPP
 #define PTO_DOMAINS_RENDERING_HPP
 
+#include <pto/domains/rendering_types.hpp>
+
 namespace pto::domains::rendering {
 
 struct ShadingTileProfile {
@@ -13,10 +15,6 @@ struct ShadingTileProfile {
 inline constexpr ShadingTileProfile default_shading_profile() {
   return {1, 1024};
 }
-
-// Rendering-oriented tile/type conventions.
-// Kept separate so we can evolve the conventions without changing the core PTO tile system.
-#include <pto/domains/rendering_types.hpp>
 
 inline constexpr const char *name() { return "rendering"; }
 

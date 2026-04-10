@@ -14,14 +14,40 @@ target_include_directories(pto_headers INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/inc
 if(PTO_ENABLE_TESTS)
   include(CTest)
   if(BUILD_TESTING)
+    find_program(PTO_PYTHON3 NAMES python3)
+    if(NOT PTO_PYTHON3)
+      message(FATAL_ERROR "python3 not found for PTO manifest validation tests")
+    endif()
+
     add_executable(pto_domain_smoke tests/domain_smoke.cpp)
     target_link_libraries(pto_domain_smoke PRIVATE pto_headers)
+    target_compile_definitions(pto_domain_smoke PRIVATE PTO_HOST_SIM=1)
     add_test(NAME pto_domain_smoke COMMAND pto_domain_smoke)
+
+    add_executable(pto_block_vector_smoke tests/block_vector_smoke.cpp)
+    target_link_libraries(pto_block_vector_smoke PRIVATE pto_headers)
+    target_compile_definitions(pto_block_vector_smoke PRIVATE PTO_HOST_SIM=1)
+    add_test(NAME pto_block_vector_smoke COMMAND pto_block_vector_smoke)
+
+    add_test(
+      NAME pto_benchmark_manifest
+      COMMAND ${PTO_PYTHON3} ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_benchmark_manifest.py)
   endif()
 endif()
 
 if(PTO_ENABLE_LINX_CROSS)
-  find_program(PTO_CLANGXX NAMES clang++)
+  set(PTO_CLANGXX_DEFAULT
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../compiler/llvm/build-linxisa-clang/bin/clang++")
+  if(EXISTS "${PTO_CLANGXX_DEFAULT}")
+    set(PTO_CLANGXX "${PTO_CLANGXX_DEFAULT}" CACHE FILEPATH
+      "clang++ used for Linx cross asm checks" FORCE)
+  else()
+    set(PTO_CLANGXX "${PTO_CLANGXX_DEFAULT}" CACHE FILEPATH
+      "clang++ used for Linx cross asm checks")
+  endif()
+  if(NOT EXISTS "${PTO_CLANGXX}")
+    find_program(PTO_CLANGXX NAMES clang++)
+  endif()
   if(NOT PTO_CLANGXX)
     message(FATAL_ERROR "clang++ not found for PTO_ENABLE_LINX_CROSS")
   endif()
@@ -115,13 +141,14 @@ if(PTO_ENABLE_LINX_CROSS)
               -target linx64-linx-none-elf
               -O2
               -S
+              -DPTO_USE_MIXED_TILE_SIMT=1
               -ffreestanding
               -fno-builtin
               -fno-stack-protector
               -fno-exceptions
               -fno-rtti
               -nostdlib
-              -I"${CMAKE_CURRENT_SOURCE_DIR}/include"
+              -I${CMAKE_CURRENT_SOURCE_DIR}/include
               "${CMAKE_CURRENT_SOURCE_DIR}/kernels/${k}.cpp"
               -o "${out_asm}"
       DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/kernels/${k}.cpp"

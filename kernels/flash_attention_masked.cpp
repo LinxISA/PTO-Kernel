@@ -297,6 +297,9 @@ void flash_attention_masked_frac(float *out_ptr, float *q_ptr, float *k_ptr,
   }
 }
 
+#if defined(__clang__)
+#pragma clang fp contract(off)
+#endif
 extern "C" void flash_attention_masked_f32(float *out_ptr, float *q_ptr,
                                               float *k_ptr, float *v_ptr) {
   if (PTO_QEMU_SMOKE) {

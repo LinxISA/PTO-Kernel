@@ -59,6 +59,9 @@ using itO = global_iterator<gmO, tileOutVec>;
 
 } // namespace
 
+#if defined(__clang__)
+#pragma clang fp contract(off)
+#endif
 extern "C" void mla_attention_demo_f32(float *out_ptr, float *q_ptr,
                                           float *k_ptr, float *v_ptr,
                                           float *wq_ptr, float *wk_ptr,

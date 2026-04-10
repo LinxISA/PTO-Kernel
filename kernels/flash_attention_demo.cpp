@@ -46,6 +46,9 @@ using itO = global_iterator<gmO, tileO>;
 
 } // namespace
 
+#if defined(__clang__)
+#pragma clang fp contract(off)
+#endif
 extern "C" void flash_attention_demo_f32(float *out_ptr, float *q_ptr,
                                             float *k_ptr, float *v_ptr) {
 #if PTO_QEMU_SMOKE

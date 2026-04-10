@@ -1,4 +1,5 @@
 #include <common/extended_kernel_runtime.hpp>
+#include <common/block_vector_kernels.hpp>
 
 using namespace pto;
 
@@ -10,6 +11,10 @@ namespace {
 
 constexpr int kS = PTO_QEMU_SMOKE ? 16 : 128;
 constexpr int kD = 16;
+
+#ifndef PTO_USE_MIXED_TILE_SIMT
+#define PTO_USE_MIXED_TILE_SIMT 0
+#endif
 
 } // namespace
 
@@ -26,7 +31,15 @@ extern "C" void sparse_attention_local_f16(fp16_t *out_ptr, fp16_t *q_ptr,
   kernels::lowp_to_float(v_ptr, v, kS * kD);
 
   kernels::tile_touch<float>(q);
+#if PTO_QEMU_SMOKE
   kernels::sparse_attention_local_f32<kS>(q, k, v, o, kS, kD, kD,
                                           window < 0 ? 0 : window);
+#elif PTO_USE_MIXED_TILE_SIMT
+  kernels::mixed_attention_f32<kS, kD, kD, 16, 16, 1, false>(
+      o, q, k, v, window < 0 ? 0 : window);
+#else
+  kernels::sparse_attention_local_f32<kS>(q, k, v, o, kS, kD, kD,
+                                          window < 0 ? 0 : window);
+#endif
   kernels::float_to_lowp(o, out_ptr, kS * kD);
 }

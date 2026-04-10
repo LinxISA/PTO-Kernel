@@ -1,4 +1,5 @@
 #include <common/extended_kernel_runtime.hpp>
+#include <common/block_vector_kernels.hpp>
 
 using namespace pto;
 
@@ -12,6 +13,10 @@ constexpr int kQHeads = PTO_QEMU_SMOKE ? 2 : 4;
 constexpr int kKVHeads = PTO_QEMU_SMOKE ? 1 : 2;
 constexpr int kS = PTO_QEMU_SMOKE ? 16 : 128;
 constexpr int kD = 16;
+
+#ifndef PTO_USE_MIXED_TILE_SIMT
+#define PTO_USE_MIXED_TILE_SIMT 0
+#endif
 
 } // namespace
 
@@ -30,9 +35,19 @@ extern "C" void gqa_f16(fp16_t *out_ptr, fp16_t *q_ptr, fp16_t *k_ptr,
   constexpr int kGroup = kQHeads / kKVHeads;
   for (int qh = 0; qh < kQHeads; ++qh) {
     const int kvh = qh / kGroup;
+#if PTO_QEMU_SMOKE
     kernels::dense_attention_f32<kS>(
         q + qh * kS * kD, k + kvh * kS * kD, v + kvh * kS * kD,
         o + qh * kS * kD, kS, kD, kD, false);
+#elif PTO_USE_MIXED_TILE_SIMT
+    kernels::mixed_attention_f32<kS, kD, kD, 16, 16, 2, false>(
+        q + qh * kS * kD, k + kvh * kS * kD, v + kvh * kS * kD,
+        o + qh * kS * kD);
+#else
+    kernels::dense_attention_f32<kS>(
+        q + qh * kS * kD, k + kvh * kS * kD, v + kvh * kS * kD,
+        o + qh * kS * kD, kS, kD, kD, false);
+#endif
   }
 
   kernels::float_to_lowp(o, out_ptr, kQHeads * kS * kD);

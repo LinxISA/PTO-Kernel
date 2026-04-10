@@ -14,48 +14,13 @@ from pathlib import Path
 
 SCRIPT = Path(__file__).resolve()
 PTO_ROOT = SCRIPT.parents[1]
+sys.path.insert(0, str(SCRIPT.parent))
 
-KERNEL_NAMES = [
-    "tload_store",
-    "mamulb",
-    "tmatmul_acc",
-    "gemm",
-    "gemm_basic",
-    "gemm_demo",
-    "gemm_performance",
-    "add_custom",
-    "flash_attention",
-    "flash_attention_demo",
-    "flash_attention_masked",
-    "fa_performance",
-    "mla_attention_demo",
-    "flash_attention_cube_fp16",
-    "flash_attention_cube_fp8_e4m3",
-    "flash_attention_cube_fp4_e2m1",
-    "flash_attention_vec_fp32",
-    "flash_attention_vec_fp16",
-    "mha_fp16",
-    "gqa_fp16",
-    "rope_apply_fp16",
-    "attention_dropout_fp16",
-    "flash_mla_deepseekv3_fp16",
-    "flash_mla_deepseekv3_fp8_e4m3",
-    "ifa_mla_seq1_fp16",
-    "ifa_gqa_seq1_fp16",
-    "paged_attention_mha_fp16",
-    "paged_attention_gqa_fp16",
-    "moe_sort_fp32",
-    "moe_topk_fp32",
-    "moe_gate_route_fp16",
-    "moe_mlp_fp16",
-    "gemm_reuse_a_fp16",
-    "gemm_reuse_b_fp16",
-    "gemm_reuse_ab_fp16",
-    "flash_attention_backward_fp16",
-    "flash_attention_backward_fp32",
-    "sparse_attention_local_fp16",
-    "sparse_attention_block_fp16",
-]
+from benchmark_manifest import benchmarks_by_parity_kernel, load_default_manifest, parity_kernel_names
+
+MANIFEST = load_default_manifest()
+KERNEL_NAMES = parity_kernel_names(MANIFEST)
+KERNEL_BENCHMARKS = benchmarks_by_parity_kernel(MANIFEST)
 
 DIGEST_RE = re.compile(r"PTO_DIGEST\s+([A-Za-z0-9_]+)\s+0x([0-9A-Fa-f]+)")
 
@@ -171,8 +136,12 @@ def build_and_run_host(clangxx: str, host_bin: Path, linxisa_root: Path) -> tupl
         clangxx,
         "-std=c++17",
         "-O2",
+        "-fno-vectorize",
+        "-fno-slp-vectorize",
+        "-ffp-contract=off",
         "-DPTO_HOST_SIM=1",
         "-DPTO_QEMU_SMOKE=1",
+        "-DPTO_USE_MIXED_TILE_SIMT=1",
         f"-I{include_dir}",
         *sources,
         "-o",
@@ -234,9 +203,11 @@ def write_reports(host: dict[str, str], qemu: dict[str, str], qemu_cmd: list[str
         match = hv is not None and qv is not None and hv == qv
         if not match:
             ok = False
+        benchmarks = KERNEL_BENCHMARKS.get(name, [])
         rows.append(
             {
                 "kernel": name,
+                "benchmarks": benchmarks,
                 "host_digest": hv,
                 "qemu_digest": qv,
                 "match": match,
@@ -247,6 +218,7 @@ def write_reports(host: dict[str, str], qemu: dict[str, str], qemu_cmd: list[str
         "generated_at_utc": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "profile": "smoke",
         "expected_kernels": KERNEL_NAMES,
+        "benchmark_manifest_loaded": MANIFEST is not None,
         "host_digest_count": len(host),
         "qemu_digest_count": len(qemu),
         "all_match": ok,
@@ -261,13 +233,15 @@ def write_reports(host: dict[str, str], qemu: dict[str, str], qemu_cmd: list[str
         f"- Generated (UTC): `{payload['generated_at_utc']}`",
         "- Profile: `PTO_QEMU_SMOKE=1`",
         f"- All match: `{'YES' if ok else 'NO'}`",
+        f"- Workbook manifest loaded: `{'YES' if MANIFEST is not None else 'NO'}`",
         "",
-        "| Kernel | Host Digest | QEMU Digest | Match |",
-        "|---|---|---|---|",
+        "| Kernel | Benchmarks | Host Digest | QEMU Digest | Match |",
+        "|---|---|---|---|---|",
     ]
     for r in rows:
+        benchmark_ids = ",".join(item["id"] for item in r["benchmarks"]) or "-"
         lines.append(
-            f"| `{r['kernel']}` | `{r['host_digest'] or 'MISSING'}` | `{r['qemu_digest'] or 'MISSING'}` | `{'yes' if r['match'] else 'no'}` |"
+            f"| `{r['kernel']}` | `{benchmark_ids}` | `{r['host_digest'] or 'MISSING'}` | `{r['qemu_digest'] or 'MISSING'}` | `{'yes' if r['match'] else 'no'}` |"
         )
     lines += [
         "",
@@ -303,6 +277,7 @@ def main(argv: list[str]) -> int:
         )
 
     out_dir = Path(args.out_dir).expanduser().resolve() if args.out_dir else linxisa_root / "workloads" / "generated"
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     clangxx = pick_clangxx(linxisa_root)
     host_bin = out_dir / "pto_kernel_parity_host"

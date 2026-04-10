@@ -2,7 +2,6 @@
 #define PTO_COMMON_PTO_TILEOP_HPP
 
 #include <stdint.h>
-#include <type_traits>
 
 #include <pto/linx/impl/backend.hpp>
 
@@ -188,13 +187,21 @@ template <Location Loc_, typename Element_, int Rows_, int Cols_,
 struct Tile {
   using DType = Element_;
   using RawTile = linx::detail::RawTile;
+  using TileDType = Tile *;
+  using ConstTileDType = const Tile *;
 
   static constexpr Location Loc = Loc_;
   static constexpr int Rows = Rows_;
   static constexpr int Cols = Cols_;
   static constexpr int RowValid = RowValid_;
   static constexpr int ColValid = ColValid_;
+  static constexpr int ValidRow = RowValid_;
+  static constexpr int ValidCol = ColValid_;
   static constexpr BLayout LayoutTag = Layout_;
+  static constexpr int RowStride =
+      LayoutTag == BLayout::RowMajor ? Cols_ : 1;
+  static constexpr int ColStride =
+      LayoutTag == BLayout::RowMajor ? 1 : Rows_;
 
   Tile() = default;
 
@@ -206,6 +213,8 @@ struct Tile {
 
   RawTile &raw() { return raw_; }
   const RawTile &raw() const { return raw_; }
+  TileDType data() { return this; }
+  ConstTileDType data() const { return this; }
 
 private:
   RawTile raw_{};

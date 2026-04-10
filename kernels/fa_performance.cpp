@@ -46,6 +46,9 @@ using itO = global_iterator<gmO, tileO>;
 
 } // namespace
 
+#if defined(__clang__)
+#pragma clang fp contract(off)
+#endif
 extern "C" void fa_performance_f32(float *out_ptr, float *q_ptr, float *k_ptr,
                                       float *v_ptr, int repeat_passes) {
   if (repeat_passes <= 0)

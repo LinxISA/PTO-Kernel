@@ -2,7 +2,6 @@
 #define PTO_LINX_IMPL_BACKEND_HPP
 
 #include <stdint.h>
-#include <type_traits>
 #if defined(PTO_HOST_SIM)
 #include <math.h>
 #include <string.h>
@@ -16,6 +15,16 @@ namespace detail {
 template <typename... Ts>
 struct dependent_false {
   static constexpr bool value = false;
+};
+
+template <typename A, typename B>
+struct is_same {
+  static constexpr bool value = false;
+};
+
+template <typename T>
+struct is_same<T, T> {
+  static constexpr bool value = true;
 };
 
 template <typename T>
@@ -137,7 +146,7 @@ struct RawTile {
   alignas(64) uint32_t words[kTileWords];
 };
 #else
-using RawTile = int __attribute__((vector_size(4096)));
+using RawTile = __LinxTile_t;
 #endif
 
 constexpr unsigned clampTileBytes(unsigned bytes) {
@@ -212,11 +221,11 @@ template <typename Scalar>
 inline long long encodeScalar(Scalar value) {
   static_assert(is_arithmetic<Scalar>::value,
                 "PTO Linx canonical v0.4: scalar operand must be arithmetic");
-  if constexpr (std::is_same<Scalar, pto::fp16_t>::value) {
+  if constexpr (is_same<Scalar, pto::fp16_t>::value) {
     return static_cast<long long>(value.bits);
-  } else if constexpr (std::is_same<Scalar, pto::fp8_e4m3_t>::value) {
+  } else if constexpr (is_same<Scalar, pto::fp8_e4m3_t>::value) {
     return static_cast<long long>(value.bits);
-  } else if constexpr (std::is_same<Scalar, pto::fp4_e2m1_t>::value) {
+  } else if constexpr (is_same<Scalar, pto::fp4_e2m1_t>::value) {
     return static_cast<long long>(value.bits & 0x0fu);
   }
   if constexpr (is_floating_point<Scalar>::value) {
