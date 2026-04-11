@@ -17,10 +17,12 @@ PTO_ROOT = SCRIPT.parents[1]
 sys.path.insert(0, str(SCRIPT.parent))
 
 from benchmark_manifest import benchmarks_by_parity_kernel, load_default_manifest, parity_kernel_names
+from kernel_catalog import load_kernel_catalog
 
 MANIFEST = load_default_manifest()
 KERNEL_NAMES = parity_kernel_names(MANIFEST)
 KERNEL_BENCHMARKS = benchmarks_by_parity_kernel(MANIFEST)
+KERNEL_CATALOG = load_kernel_catalog()
 
 DIGEST_RE = re.compile(r"PTO_DIGEST\s+([A-Za-z0-9_]+)\s+0x([0-9A-Fa-f]+)")
 
@@ -121,7 +123,7 @@ def kernel_sources(linxisa_root: Path | None) -> list[Path]:
         base = linxisa_root / "workloads" / "pto_kernels" / "kernels"
     else:
         base = PTO_ROOT / "kernels"
-    return [base / f"{name}.cpp" for name in KERNEL_NAMES]
+    return [base / KERNEL_CATALOG[name] for name in KERNEL_NAMES]
 
 
 def build_and_run_host(clangxx: str, host_bin: Path, linxisa_root: Path) -> tuple[dict[str, str], str]:

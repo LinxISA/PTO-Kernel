@@ -1,18 +1,16 @@
 #include <common/pto_tileop.hpp>
+#include <common/runtime/kernel_shapes.hpp>
+#include <common/runtime/kernel_tiling.hpp>
 
 using namespace pto;
 
 namespace {
 
-#ifndef PTO_QEMU_SMOKE
-#define PTO_QEMU_SMOKE 0
-#endif
-
-constexpr int kS = PTO_QEMU_SMOKE ? 16 : 256;
-constexpr int kQD = 16;
-constexpr int kVD = 16;
-constexpr int kTm = 16;
-constexpr int kTk = 4;
+constexpr int kS = kernels::shapes::kAttentionLargeSeq;
+constexpr int kQD = kernels::shapes::kAttentionQD;
+constexpr int kVD = kernels::shapes::kAttentionVD;
+constexpr int kTm = kernels::tiling::kFlashTileM;
+constexpr int kTk = kernels::tiling::kFlashTileK;
 constexpr float kScale = 0.25f;
 
 static_assert(kTm * kTk * kQD * static_cast<int>(sizeof(float)) <= 4096,

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import zipfile
 import xml.etree.ElementTree as ET
 from collections import Counter
@@ -13,6 +14,10 @@ from typing import Any
 SCRIPT = Path(__file__).resolve()
 PTO_ROOT = SCRIPT.parents[1]
 KERNEL_DIR = PTO_ROOT / "kernels"
+if str(SCRIPT.parent) not in sys.path:
+    sys.path.insert(0, str(SCRIPT.parent))
+
+from kernel_catalog import load_kernel_catalog
 DEFAULT_WORKBOOK = Path("~/Documents/benchmark_master_list_completed.xlsx").expanduser()
 XML_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
@@ -203,7 +208,7 @@ def load_workbook_tables(workbook_path: Path) -> dict[str, list[dict[str, str]]]
 
 
 def local_kernel_names() -> set[str]:
-    return {path.stem for path in KERNEL_DIR.glob("*.cpp") if path.name != "README.md"}
+    return set(load_kernel_catalog())
 
 
 def _impl_row(row: dict[str, str]) -> tuple[str, list[str], str]:

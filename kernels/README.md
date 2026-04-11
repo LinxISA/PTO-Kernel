@@ -1,4 +1,4 @@
-# PTO Kernels for LinxISA (v0.3)
+# PTO Kernels for LinxISA
 
 This folder contains PTO tile kernels compiled through the LinxISA LLVM backend.
 
@@ -6,83 +6,20 @@ Naming policy:
 - kernel source names do not use the legacy `pto_` prefix.
 - kernel source names do not use the legacy `_auto` suffix.
 
-Kernels:
-- `tload_store.cpp`
-- `mamulb.cpp`
-- `tmatmul_acc.cpp`
-- `gemm.cpp`
-- `gemm_basic.cpp`
-- `gemm_demo.cpp`
-- `gemm_performance.cpp`
-- `add_custom.cpp`
-- `flash_attention.cpp`
-- `flash_attention_demo.cpp`
-- `flash_attention_masked.cpp`
-- `fa_performance.cpp`
-- `mla_attention_demo.cpp`
-- `flash_attention_cube_fp16.cpp`
-- `flash_attention_cube_fp8_e4m3.cpp`
-- `flash_attention_cube_fp4_e2m1.cpp`
-- `flash_attention_vec_fp32.cpp`
-- `flash_attention_vec_fp16.cpp`
-- `mha_fp16.cpp`
-- `gqa_fp16.cpp`
-- `rope_apply_fp16.cpp`
-- `attention_dropout_fp16.cpp`
-- `flash_mla_deepseekv3_fp16.cpp`
-- `flash_mla_deepseekv3_fp8_e4m3.cpp`
-- `ifa_mla_seq1_fp16.cpp`
-- `ifa_gqa_seq1_fp16.cpp`
-- `paged_attention_mha_fp16.cpp`
-- `paged_attention_gqa_fp16.cpp`
-- `moe_sort_fp32.cpp`
-- `moe_topk_fp32.cpp`
-- `moe_gate_route_fp16.cpp`
-- `moe_mlp_fp16.cpp`
-- `gemm_reuse_a_fp16.cpp`
-- `gemm_reuse_b_fp16.cpp`
-- `gemm_reuse_ab_fp16.cpp`
-- `flash_attention_backward_fp16.cpp`
-- `flash_attention_backward_fp32.cpp`
-- `sparse_attention_local_fp16.cpp`
-- `sparse_attention_block_fp16.cpp`
-- `rmsnorm_fp16.cpp`
-- `relu_fp32.cpp`
-- `sigmoid_fp32.cpp`
-- `softmax_fp32.cpp`
-- `tanh_fp32.cpp`
-- `silu_fp32.cpp`
-- `gelu_fp32.cpp`
-- `swiglu_fp16.cpp`
-- `layernorm_fp16.cpp`
-- `batchnorm_fp16.cpp`
-- `argmax_fp32.cpp`
-- `matmul_a8w8.cpp`
-- `matmul_a8w4.cpp`
-- `matmul_a16w8.cpp`
-- `matmul_a16w4.cpp`
-- `decode_greedy_search_fp32.cpp`
-- `decode_beam_search_fp32.cpp`
-- `decode_temperature_scaling_fp32.cpp`
-- `decode_topk_filter_fp32.cpp`
-- `decode_topp_nucleus_filter_fp32.cpp`
-- `transpose_large_fp32.cpp`
-- `permute_nhwc_nchw_fp32.cpp`
-- `slice_fp32.cpp`
-- `gather_fp32.cpp`
-- `scatter_fp32.cpp`
-- `where_fp32.cpp`
-- `concat_fp32.cpp`
-- `split_fp32.cpp`
-- `stack_fp32.cpp`
-- `reshape_fp32.cpp`
-- `flatten_fp32.cpp`
-- `squeeze_fp32.cpp`
-- `unsqueeze_fp32.cpp`
-- `hash_table_lookup_fp32.cpp`
-- `hash_table_insert_fp32.cpp`
-- `unsorted_segment_sum_fp32.cpp`
-- `unique_i32.cpp`
+Layout:
+- `attention/`: attention, FlashMLA, paged attention, sparse attention, RoPE, dropout
+- `matmul/`: matmul, GEMM, reuse variants, quantized matmul
+- `normalization/`: RMSNorm, LayerNorm, BatchNorm
+- `elementwise/`: add, GELU, ReLU, Sigmoid, SiLU, Softmax, SwigLU, Tanh
+- `layout/`: concat, split, stack, transpose, permute, reshape-family
+- `indexing/`: argmax, gather, scatter, segment, unique, hash-table helpers
+- `routing/`: MoE routing and MLP primitives
+- `decode/`: decode filters and search helpers
+- `memory/`: raw tile load/store coverage kernels
+
+Catalog:
+- `catalog.txt` is the source of truth for kernel discovery.
+- build scripts, manifest tooling, parity tooling, and QEMU suite wiring all resolve sources through the catalog instead of assuming a flat directory.
 
 All kernels:
 - include `common/pto_tileop.hpp` from `workloads/pto_kernels/include` (when
@@ -100,6 +37,12 @@ Runtime profile policy:
 - default full profile keeps original larger tensor domains for compile/asm bring-up.
 - `PTO_QEMU_SMOKE=1` enables reduced runtime domains for QEMU execution while preserving tile-op and loop-path coverage.
 - masked kernels keep non-zero remainder paths in smoke profile.
+
+Shared env and tiling policy:
+- `include/common/runtime/kernel_env.hpp` owns `PTO_QEMU_SMOKE` and `PTO_USE_MIXED_TILE_SIMT`.
+- `include/common/runtime/kernel_shapes.hpp` holds the default large-shape and smoke-shape presets.
+- `include/common/runtime/kernel_tiling.hpp` holds parameterized tile sizes such as `PTO_GEMM_TILE_*`, `PTO_FLASH_TILE_*`, `PTO_FLASH_VEC_*`, and `PTO_FLASH_CUBE_*`.
+- kernels are grouped by operation kind, not by dtype.
 
 Parity gate:
 - host-vs-QEMU parity runner:

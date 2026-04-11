@@ -52,87 +52,15 @@ if(PTO_ENABLE_LINX_CROSS)
     message(FATAL_ERROR "clang++ not found for PTO_ENABLE_LINX_CROSS")
   endif()
 
-  set(PTO_KERNELS
-    tload_store
-    mamulb
-    tmatmul_acc
-    gemm
-    gemm_basic
-    gemm_demo
-    gemm_performance
-    add_custom
-    flash_attention
-    flash_attention_demo
-    flash_attention_masked
-    fa_performance
-    mla_attention_demo
-    flash_attention_cube_fp16
-    flash_attention_cube_fp8_e4m3
-    flash_attention_cube_fp4_e2m1
-    flash_attention_vec_fp32
-    flash_attention_vec_fp16
-    mha_fp16
-    gqa_fp16
-    rope_apply_fp16
-    attention_dropout_fp16
-    flash_mla_deepseekv3_fp16
-    flash_mla_deepseekv3_fp8_e4m3
-    ifa_mla_seq1_fp16
-    ifa_gqa_seq1_fp16
-    paged_attention_mha_fp16
-    paged_attention_gqa_fp16
-    moe_sort_fp32
-    moe_topk_fp32
-    moe_gate_route_fp16
-    moe_mlp_fp16
-    gemm_reuse_a_fp16
-    gemm_reuse_b_fp16
-    gemm_reuse_ab_fp16
-    flash_attention_backward_fp16
-    flash_attention_backward_fp32
-    sparse_attention_local_fp16
-    sparse_attention_block_fp16
-    rmsnorm_fp16
-    relu_fp32
-    sigmoid_fp32
-    softmax_fp32
-    tanh_fp32
-    silu_fp32
-    gelu_fp32
-    swiglu_fp16
-    layernorm_fp16
-    batchnorm_fp16
-    argmax_fp32
-    matmul_a8w8
-    matmul_a8w4
-    matmul_a16w8
-    matmul_a16w4
-    decode_greedy_search_fp32
-    decode_beam_search_fp32
-    decode_temperature_scaling_fp32
-    decode_topk_filter_fp32
-    decode_topp_nucleus_filter_fp32
-    transpose_large_fp32
-    permute_nhwc_nchw_fp32
-    slice_fp32
-    gather_fp32
-    scatter_fp32
-    where_fp32
-    concat_fp32
-    split_fp32
-    stack_fp32
-    reshape_fp32
-    flatten_fp32
-    squeeze_fp32
-    unsqueeze_fp32
-    hash_table_lookup_fp32
-    hash_table_insert_fp32
-    unsorted_segment_sum_fp32
-    unique_i32
-  )
+  file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/kernels/catalog.txt" PTO_KERNEL_PATHS)
 
   set(PTO_ASM_OUTPUTS)
-  foreach(k IN LISTS PTO_KERNELS)
+  foreach(rel_path IN LISTS PTO_KERNEL_PATHS)
+    if(rel_path STREQUAL "" OR rel_path MATCHES "^#")
+      continue()
+    endif()
+    get_filename_component(k "${rel_path}" NAME_WE)
+    set(src_path "${CMAKE_CURRENT_SOURCE_DIR}/kernels/${rel_path}")
     set(out_asm "${CMAKE_BINARY_DIR}/linx_asm/${k}.s")
     add_custom_command(
       OUTPUT "${out_asm}"
@@ -149,9 +77,9 @@ if(PTO_ENABLE_LINX_CROSS)
               -fno-rtti
               -nostdlib
               -I${CMAKE_CURRENT_SOURCE_DIR}/include
-              "${CMAKE_CURRENT_SOURCE_DIR}/kernels/${k}.cpp"
+              "${src_path}"
               -o "${out_asm}"
-      DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/kernels/${k}.cpp"
+      DEPENDS "${src_path}"
       VERBATIM)
     list(APPEND PTO_ASM_OUTPUTS "${out_asm}")
   endforeach()

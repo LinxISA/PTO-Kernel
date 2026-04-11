@@ -1,20 +1,14 @@
 #include <common/extended_kernel_runtime.hpp>
 #include <common/block_vector_kernels.hpp>
+#include <common/runtime/kernel_shapes.hpp>
+#include <common/runtime/kernel_tiling.hpp>
 
 using namespace pto;
 
 namespace {
 
-#ifndef PTO_QEMU_SMOKE
-#define PTO_QEMU_SMOKE 0
-#endif
-
-constexpr int kS = PTO_QEMU_SMOKE ? 16 : 128;
-constexpr int kD = 16;
-
-#ifndef PTO_USE_MIXED_TILE_SIMT
-#define PTO_USE_MIXED_TILE_SIMT 0
-#endif
+constexpr int kS = kernels::shapes::kAttentionSeq;
+constexpr int kD = kernels::shapes::kAttentionQD;
 
 inline void deterministic_dense_attention_f32(const float *q, const float *k,
                                               const float *v, float *o, int s,
@@ -72,7 +66,9 @@ extern "C" void flash_attention_vec_f32(float *out_ptr, float *q_ptr,
   deterministic_dense_attention_f32(q_ptr, k_ptr, v_ptr, out_ptr, kS, kD, kD,
                                     false);
 #elif PTO_USE_MIXED_TILE_SIMT
-  kernels::mixed_attention_f32<kS, kD, kD, 8, 4, 4, false>(
+  kernels::mixed_attention_f32<kS, kD, kD, kernels::tiling::kFlashVecTileM,
+                               kernels::tiling::kFlashVecTileK,
+                               kernels::tiling::kFlashVecYDim, false>(
       out_ptr, q_ptr, k_ptr, v_ptr);
 #else
   kernels::dense_attention_f32<kS>(q_ptr, k_ptr, v_ptr, out_ptr, kS, kD, kD,

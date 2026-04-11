@@ -1,15 +1,12 @@
 #include <common/pto_tileop.hpp>
+#include <common/runtime/kernel_shapes.hpp>
 
 using namespace pto;
 
 namespace {
 
-#ifndef PTO_QEMU_SMOKE
-#define PTO_QEMU_SMOKE 0
-#endif
-
-constexpr int kRows = PTO_QEMU_SMOKE ? 32 : 1024;
-constexpr int kCols = PTO_QEMU_SMOKE ? 32 : 1024;
+constexpr int kRows = kernels::shapes::kMemoryRows;
+constexpr int kCols = kernels::shapes::kMemoryCols;
 using tile_vec_f32 = Tile<Location::Vec, float, 32, 32, BLayout::RowMajor>;
 
 static_assert(tile_vec_f32::Rows * tile_vec_f32::Cols *
