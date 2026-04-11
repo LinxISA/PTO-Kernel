@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Linx Kernel Status Panel</title>
+    <link rel="stylesheet" href="./assets/site.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Linx Kernel Status Panel</p>
+          <h1>Workbook-backed status for PTO kernels, benchmark rows, and backlog</h1>
+          <p class="lede">
+            This panel is generated from the benchmark workbook normalization flow in
+            <code>workloads/pto_kernels/tools/benchmark_manifest.py</code>.
+          </p>
+        </div>
+        <div class="meta-card">
+          <div class="meta-row">
+            <span>Generated</span>
+            <strong id="generated-at">-</strong>
+          </div>
+          <div class="meta-row">
+            <span>Workbook</span>
+            <strong id="workbook-path">-</strong>
+          </div>
+          <div class="meta-row">
+            <span>PTO Root</span>
+            <strong id="pto-root">-</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="summary-grid" id="summary-grid"></section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Kernel Panel</p>
+            <h2>Tracked kernels</h2>
+          </div>
+          <div class="filters">
+            <input id="kernel-search" type="search" placeholder="Search kernel or benchmark id" />
+            <select id="kernel-status-filter">
+              <option value="">All statuses</option>
+            </select>
+            <select id="kernel-strategy-filter">
+              <option value="">All strategies</option>
+            </select>
+            <select id="kernel-parity-filter">
+              <option value="">All parity states</option>
+              <option value="yes">Parity covered</option>
+              <option value="no">Not parity covered</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Kernel</th>
+                <th>Path</th>
+                <th>Benchmarks</th>
+                <th>Status</th>
+                <th>Strategies</th>
+                <th>Op kinds</th>
+                <th>Parity</th>
+              </tr>
+            </thead>
+            <tbody id="kernel-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Backlog</p>
+            <h2>Rows without a mapped kernel</h2>
+          </div>
+          <div class="filters">
+            <select id="backlog-status-filter">
+              <option value="">All statuses</option>
+            </select>
+            <select id="backlog-strategy-filter">
+              <option value="">All strategies</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Op kind</th>
+                <th>Status</th>
+                <th>Strategy</th>
+                <th>Deliverable</th>
+                <th>Review</th>
+              </tr>
+            </thead>
+            <tbody id="backlog-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Benchmark Rows</p>
+            <h2>All workbook rows</h2>
+          </div>
+          <div class="filters">
+            <input id="benchmark-search" type="search" placeholder="Search id, op kind, kernel, or name" />
+            <select id="benchmark-status-filter">
+              <option value="">All statuses</option>
+            </select>
+            <select id="benchmark-strategy-filter">
+              <option value="">All strategies</option>
+            </select>
+            <select id="benchmark-op-filter">
+              <option value="">All op kinds</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Op kind</th>
+                <th>Status</th>
+                <th>Kernel</th>
+                <th>Strategy</th>
+                <th>Deliverable</th>
+                <th>Review</th>
+              </tr>
+            </thead>
+            <tbody id="benchmark-table"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="./assets/site.js"></script>
+  </body>
+  </html>

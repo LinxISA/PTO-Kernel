@@ -33,6 +33,7 @@ cmake --build build-linx --target pto_linx_contracts
 - `/Users/zhoubot/linx-isa/docs/project/navigation.md`
 - `/Users/zhoubot/linx-isa/docs/bringup/`
 - `/Users/zhoubot/linx-isa/workloads/pto_kernels/docs/`
+- Pages dashboard: `https://linxisa.github.io/pto-kernel/` (published from `docs/`)
 
 ## Tidy-Up Status
 - `done`: split kernel sources by operation family under `kernels/attention`, `kernels/matmul`, `kernels/normalization`, `kernels/elementwise`, `kernels/layout`, `kernels/indexing`, `kernels/routing`, `kernels/decode`, and `kernels/memory`
@@ -42,3 +43,8 @@ cmake --build build-linx --target pto_linx_contracts
 - `done`: kept full-profile shapes large by default and preserved reduced smoke shapes for QEMU
 - `done`: revalidated host tests, Linx asm contracts, and host-vs-QEMU parity after the refactor
 - `in_progress`: migrate the remaining non-benchmarked kernels to the shared shape and tiling headers so every kernel family uses the same configuration surface
+
+## Status Panel
+- site source: `docs/index.html`, `docs/assets/site.css`, `docs/assets/site.js`
+- generated data: `docs/data/status.json`
+- refresh command: `python3 tools/build_status_site.py`
