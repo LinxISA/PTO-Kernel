@@ -146,7 +146,7 @@ struct RawTile {
   alignas(64) uint32_t words[kTileWords];
 };
 #else
-using RawTile = __LinxTile_t;
+using RawTile = int __attribute__((__vector_size__(4096), __aligned__(64)));
 #endif
 
 constexpr unsigned clampTileBytes(unsigned bytes) {
