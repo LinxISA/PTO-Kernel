@@ -8,9 +8,13 @@ namespace {
 #define PTO_QEMU_SMOKE 0
 #endif
 
-constexpr int kM = PTO_QEMU_SMOKE ? 16 : 64;
-constexpr int kN = PTO_QEMU_SMOKE ? 16 : 64;
-constexpr int kK = PTO_QEMU_SMOKE ? 16 : 64;
+#ifndef PTO_QEMU_SMOKE_DIM
+#define PTO_QEMU_SMOKE_DIM 16
+#endif
+
+constexpr int kM = PTO_QEMU_SMOKE ? PTO_QEMU_SMOKE_DIM : 64;
+constexpr int kN = PTO_QEMU_SMOKE ? PTO_QEMU_SMOKE_DIM : 64;
+constexpr int kK = PTO_QEMU_SMOKE ? PTO_QEMU_SMOKE_DIM : 64;
 constexpr int kBM = 8;
 constexpr int kBN = 8;
 constexpr int kBK = 8;
