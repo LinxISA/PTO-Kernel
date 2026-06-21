@@ -486,7 +486,7 @@ inline void mixed_attention_f32(float *out_ptr, float *q_ptr, float *k_ptr,
           new_sum_ptr[i * tileSum::RowStride] = upd_sum;
         });
       };
-#if defined(__LINXISA__)
+#if defined(__LINXISA__) && !PTO_QEMU_SMOKE
       if constexpr (YDim == 2) {
         new_max_2src<tileW, tileMax><<<tileMax::ValidRow, 1, 1>>>(
             tScale.data(), tNewMax.data(), tW[0].data(), tW[1].data(),
@@ -578,7 +578,7 @@ inline void mixed_attention_f32(float *out_ptr, float *q_ptr, float *k_ptr,
         tOut = tPV;
         have_output = true;
       } else {
-#if defined(__LINXISA__)
+#if defined(__LINXISA__) && !PTO_QEMU_SMOKE
         if constexpr (YDim == 2) {
           global_update<tileOut, tileScale>
               <<<tileOut::ValidRow, tileOut::ValidCol, 1>>>(
@@ -595,7 +595,7 @@ inline void mixed_attention_f32(float *out_ptr, float *q_ptr, float *k_ptr,
       tSum = tNewSum;
     }
 
-#if defined(__LINXISA__)
+#if defined(__LINXISA__) && !PTO_QEMU_SMOKE
     if constexpr (YDim == 2) {
       normalize_with_sum<tileOut, tileSum>
           <<<tileOut::ValidRow, tileOut::ValidCol, 1>>>(

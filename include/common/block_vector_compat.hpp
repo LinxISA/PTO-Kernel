@@ -14,6 +14,10 @@
   __attribute__((annotate("linx_vpar_kernel")))
 #endif
 
+#ifndef PTO_QEMU_SMOKE
+#define PTO_QEMU_SMOKE 0
+#endif
+
 #ifndef __mpar__
 #define __mpar__ inline __attribute__((always_inline)) \
   __attribute__((annotate("linx_mpar_kernel")))
@@ -85,7 +89,7 @@ inline const typename TileT::DType *tile_ptr(const TileT &tile) {
 
 } // namespace detail
 
-#if defined(__LINXISA__) && !defined(PTO_HOST_SIM)
+#if defined(__LINXISA__) && !defined(PTO_HOST_SIM) && !PTO_QEMU_SMOKE
 inline uint16_t blkv_get_index_x() {
   return static_cast<uint16_t>(__builtin_linx_lc0());
 }
