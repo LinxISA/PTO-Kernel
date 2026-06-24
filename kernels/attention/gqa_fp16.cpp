@@ -9,10 +9,30 @@ namespace {
 #define PTO_QEMU_SMOKE 0
 #endif
 
-constexpr int kQHeads = PTO_QEMU_SMOKE ? 2 : 4;
-constexpr int kKVHeads = PTO_QEMU_SMOKE ? 1 : 2;
-constexpr int kS = PTO_QEMU_SMOKE ? 16 : 128;
-constexpr int kD = 16;
+#ifndef PTO_GQA_SMOKE_Q_HEADS
+#define PTO_GQA_SMOKE_Q_HEADS 2
+#endif
+
+#ifndef PTO_GQA_SMOKE_KV_HEADS
+#define PTO_GQA_SMOKE_KV_HEADS 1
+#endif
+
+#ifndef PTO_GQA_SMOKE_SEQ
+#define PTO_GQA_SMOKE_SEQ 16
+#endif
+
+#ifndef PTO_GQA_SMOKE_DIM
+#define PTO_GQA_SMOKE_DIM 16
+#endif
+
+constexpr int kQHeads = PTO_QEMU_SMOKE ? PTO_GQA_SMOKE_Q_HEADS : 4;
+constexpr int kKVHeads = PTO_QEMU_SMOKE ? PTO_GQA_SMOKE_KV_HEADS : 2;
+constexpr int kS = PTO_QEMU_SMOKE ? PTO_GQA_SMOKE_SEQ : 128;
+constexpr int kD = PTO_QEMU_SMOKE ? PTO_GQA_SMOKE_DIM : 16;
+static_assert(kQHeads > 0, "GQA requires at least one query head");
+static_assert(kKVHeads > 0, "GQA requires at least one key/value head");
+static_assert(kQHeads % kKVHeads == 0,
+              "GQA query heads must be divisible by key/value heads");
 
 #ifndef PTO_USE_MIXED_TILE_SIMT
 #define PTO_USE_MIXED_TILE_SIMT 0
