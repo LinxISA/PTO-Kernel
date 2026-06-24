@@ -9,8 +9,18 @@ namespace {
 #define PTO_QEMU_SMOKE 0
 #endif
 
-constexpr int kTokens = PTO_QEMU_SMOKE ? 16 : 128;
-constexpr int kD = 16;
+#ifndef PTO_RMSNORM_SMOKE_TOKENS
+#define PTO_RMSNORM_SMOKE_TOKENS 16
+#endif
+
+#ifndef PTO_RMSNORM_SMOKE_CHANNELS
+#define PTO_RMSNORM_SMOKE_CHANNELS 16
+#endif
+
+constexpr int kTokens = PTO_QEMU_SMOKE ? PTO_RMSNORM_SMOKE_TOKENS : 128;
+constexpr int kD = PTO_QEMU_SMOKE ? PTO_RMSNORM_SMOKE_CHANNELS : 16;
+static_assert(kTokens > 0, "RMSNorm requires at least one token");
+static_assert(kD > 0, "RMSNorm requires at least one channel");
 
 #ifndef PTO_USE_MIXED_TILE_SIMT
 #define PTO_USE_MIXED_TILE_SIMT 0
