@@ -9,8 +9,18 @@ namespace {
 #define PTO_QEMU_SMOKE 0
 #endif
 
-constexpr int kS = PTO_QEMU_SMOKE ? 16 : 128;
-constexpr int kD = 16;
+#ifndef PTO_SPARSE_LOCAL_SMOKE_SEQ
+#define PTO_SPARSE_LOCAL_SMOKE_SEQ 16
+#endif
+
+#ifndef PTO_SPARSE_LOCAL_SMOKE_DIM
+#define PTO_SPARSE_LOCAL_SMOKE_DIM 16
+#endif
+
+constexpr int kS = PTO_QEMU_SMOKE ? PTO_SPARSE_LOCAL_SMOKE_SEQ : 128;
+constexpr int kD = PTO_QEMU_SMOKE ? PTO_SPARSE_LOCAL_SMOKE_DIM : 16;
+static_assert(kS > 0, "sparse local attention requires at least one token");
+static_assert(kD > 0, "sparse local attention requires at least one channel");
 
 #ifndef PTO_USE_MIXED_TILE_SIMT
 #define PTO_USE_MIXED_TILE_SIMT 0
