@@ -1,4 +1,5 @@
 #include <common/pto_tileop.hpp>
+#include <common/runtime/kernel_shapes.hpp>
 
 using namespace pto;
 
@@ -303,9 +304,9 @@ void flash_attention_masked_frac(float *out_ptr, float *q_ptr, float *k_ptr,
 extern "C" void flash_attention_masked_f32(float *out_ptr, float *q_ptr,
                                               float *k_ptr, float *v_ptr) {
   if (PTO_QEMU_SMOKE) {
-    constexpr int S = 18;
-    constexpr int qD = 16;
-    constexpr int vD = 16;
+    constexpr int S = kernels::shapes::kAttentionMaskedSeq;
+    constexpr int qD = kernels::shapes::kAttentionMaskedQD;
+    constexpr int vD = kernels::shapes::kAttentionMaskedVD;
     constexpr float scale = 1.0f / 4.0f;
     for (int i = 0; i < S; ++i) {
       for (int d = 0; d < vD; ++d) {

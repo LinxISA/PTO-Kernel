@@ -23,6 +23,18 @@
 #define PTO_ATTENTION_SMALL_SMOKE_QD 4
 #endif
 
+#ifndef PTO_ATTENTION_MASKED_SMOKE_SEQ
+#define PTO_ATTENTION_MASKED_SMOKE_SEQ 18
+#endif
+
+#ifndef PTO_ATTENTION_MASKED_SMOKE_QD
+#define PTO_ATTENTION_MASKED_SMOKE_QD 16
+#endif
+
+#ifndef PTO_ATTENTION_MASKED_SMOKE_VD
+#define PTO_ATTENTION_MASKED_SMOKE_VD 16
+#endif
+
 namespace pto {
 namespace kernels {
 namespace shapes {
@@ -42,6 +54,12 @@ inline constexpr int kAttentionQD = env::select(PTO_ATTENTION_SMOKE_QD, 16);
 inline constexpr int kAttentionVD = env::select(PTO_ATTENTION_SMOKE_VD, 16);
 inline constexpr int kAttentionSmallQD =
     env::select(PTO_ATTENTION_SMALL_SMOKE_QD, 4);
+inline constexpr int kAttentionMaskedSeq =
+    env::select(PTO_ATTENTION_MASKED_SMOKE_SEQ, 130);
+inline constexpr int kAttentionMaskedQD =
+    env::select(PTO_ATTENTION_MASKED_SMOKE_QD, 16);
+inline constexpr int kAttentionMaskedVD =
+    env::select(PTO_ATTENTION_MASKED_SMOKE_VD, 16);
 
 inline constexpr int kMlaInputDim = 16;
 inline constexpr int kMlaLatentDim = 4;
