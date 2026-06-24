@@ -3,6 +3,26 @@
 
 #include <common/runtime/kernel_env.hpp>
 
+#ifndef PTO_ATTENTION_SMOKE_SEQ
+#define PTO_ATTENTION_SMOKE_SEQ 16
+#endif
+
+#ifndef PTO_ATTENTION_LARGE_SMOKE_SEQ
+#define PTO_ATTENTION_LARGE_SMOKE_SEQ 16
+#endif
+
+#ifndef PTO_ATTENTION_SMOKE_QD
+#define PTO_ATTENTION_SMOKE_QD 16
+#endif
+
+#ifndef PTO_ATTENTION_SMOKE_VD
+#define PTO_ATTENTION_SMOKE_VD 16
+#endif
+
+#ifndef PTO_ATTENTION_SMALL_SMOKE_QD
+#define PTO_ATTENTION_SMALL_SMOKE_QD 4
+#endif
+
 namespace pto {
 namespace kernels {
 namespace shapes {
@@ -15,11 +35,13 @@ inline constexpr int kMatmulN = env::select(16, 256);
 inline constexpr int kMatmulK = env::select(16, 256);
 inline constexpr int kMatmulReuseExtent = env::select(16, 64);
 
-inline constexpr int kAttentionSeq = env::select(16, 128);
-inline constexpr int kAttentionLargeSeq = env::select(16, 256);
-inline constexpr int kAttentionQD = 16;
-inline constexpr int kAttentionVD = 16;
-inline constexpr int kAttentionSmallQD = 4;
+inline constexpr int kAttentionSeq = env::select(PTO_ATTENTION_SMOKE_SEQ, 128);
+inline constexpr int kAttentionLargeSeq =
+    env::select(PTO_ATTENTION_LARGE_SMOKE_SEQ, 256);
+inline constexpr int kAttentionQD = env::select(PTO_ATTENTION_SMOKE_QD, 16);
+inline constexpr int kAttentionVD = env::select(PTO_ATTENTION_SMOKE_VD, 16);
+inline constexpr int kAttentionSmallQD =
+    env::select(PTO_ATTENTION_SMALL_SMOKE_QD, 4);
 
 inline constexpr int kMlaInputDim = 16;
 inline constexpr int kMlaLatentDim = 4;
