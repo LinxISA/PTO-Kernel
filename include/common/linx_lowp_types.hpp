@@ -164,6 +164,8 @@ inline float fp8_e4m3_to_float(fp8_e4m3_t x) {
 inline fp8_e4m3_t::operator float() const { return fp8_e4m3_to_float(*this); }
 
 inline fp8_e4m3_t float_to_fp8_e4m3(float x) {
+  if (x != x)
+    return fp8_e4m3_t{static_cast<uint8_t>(0x7fu)};
   if (x == 0.0f)
     return fp8_e4m3_t{static_cast<uint8_t>(0u)};
 

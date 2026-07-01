@@ -1206,7 +1206,7 @@ inline void TEXPANDCOL(DstTile &dst, const SrcTile &src) {
 } // namespace pto
 
 #ifndef PTO_NO_GLOBAL_HALF_ALIAS
-using __half = pto::half;
+using __half = pto::fp16_t;
 using __fp32 = float;
 using pto_bf16_t = pto::bf16_t;
 using pto_fp8_e4m3_t = pto::fp8_e4m3_t;
