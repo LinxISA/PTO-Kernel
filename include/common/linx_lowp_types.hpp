@@ -7,20 +7,6 @@ namespace pto {
 
 struct fp16_t {
   uint16_t bits;
-  constexpr fp16_t() : bits(0u) {}
-  constexpr explicit fp16_t(uint16_t raw) : bits(raw) {}
-  fp16_t(float x);
-  fp16_t &operator=(float x);
-  operator float() const;
-};
-
-struct bf16_t {
-  uint16_t bits;
-  constexpr bf16_t() : bits(0u) {}
-  constexpr explicit bf16_t(uint16_t raw) : bits(raw) {}
-  bf16_t(float x);
-  bf16_t &operator=(float x);
-  operator float() const;
 };
 
 #if !defined(__CPU_SIM)
@@ -29,20 +15,10 @@ using half = fp16_t;
 
 struct fp8_e4m3_t {
   uint8_t bits;
-  constexpr fp8_e4m3_t() : bits(0u) {}
-  constexpr explicit fp8_e4m3_t(uint8_t raw) : bits(raw) {}
-  fp8_e4m3_t(float x);
-  fp8_e4m3_t &operator=(float x);
-  operator float() const;
 };
 
 struct fp4_e2m1_t {
   uint8_t bits;
-  constexpr fp4_e2m1_t() : bits(0u) {}
-  constexpr explicit fp4_e2m1_t(uint8_t raw) : bits(raw) {}
-  fp4_e2m1_t(float x);
-  fp4_e2m1_t &operator=(float x);
-  operator float() const;
 };
 
 inline float fp16_to_float(fp16_t x) {
@@ -79,8 +55,6 @@ inline float fp16_to_float(fp16_t x) {
   } cvt = {out_bits};
   return cvt.f;
 }
-
-inline fp16_t::operator float() const { return fp16_to_float(*this); }
 
 inline fp16_t float_to_fp16(float x) {
   union {
@@ -124,13 +98,6 @@ inline fp16_t float_to_fp16(float x) {
   return fp16_t{static_cast<uint16_t>(sign | (static_cast<uint32_t>(exp16) << 10) | (mant >> 13))};
 }
 
-inline fp16_t::fp16_t(float x) : bits(float_to_fp16(x).bits) {}
-
-inline fp16_t &fp16_t::operator=(float x) {
-  bits = float_to_fp16(x).bits;
-  return *this;
-}
-
 inline float fp8_e4m3_to_float(fp8_e4m3_t x) {
   auto pow2i = [](int e) -> float {
     float s = 1.0f;
@@ -161,11 +128,9 @@ inline float fp8_e4m3_to_float(fp8_e4m3_t x) {
          pow2i(static_cast<int>(exp) - 7);
 }
 
-inline fp8_e4m3_t::operator float() const { return fp8_e4m3_to_float(*this); }
-
 inline fp8_e4m3_t float_to_fp8_e4m3(float x) {
   if (x == 0.0f)
-    return fp8_e4m3_t{static_cast<uint8_t>(0u)};
+    return fp8_e4m3_t{0u};
 
   const bool neg = x < 0.0f;
   float ax = neg ? -x : x;
@@ -208,13 +173,6 @@ inline fp8_e4m3_t float_to_fp8_e4m3(float x) {
   return fp8_e4m3_t{static_cast<uint8_t>(sign | (static_cast<uint8_t>(ef) << 3) | static_cast<uint8_t>(mant))};
 }
 
-inline fp8_e4m3_t::fp8_e4m3_t(float x) : bits(float_to_fp8_e4m3(x).bits) {}
-
-inline fp8_e4m3_t &fp8_e4m3_t::operator=(float x) {
-  bits = float_to_fp8_e4m3(x).bits;
-  return *this;
-}
-
 inline float fp4_e2m1_to_float(fp4_e2m1_t x) {
   const uint8_t b = static_cast<uint8_t>(x.bits & 0x0fu);
   static constexpr float kTable[16] = {
@@ -222,8 +180,6 @@ inline float fp4_e2m1_to_float(fp4_e2m1_t x) {
       -0.0f, -0.5f, -1.0f, -1.5f, -2.0f, -3.0f, -4.0f, -6.0f};
   return kTable[b];
 }
-
-inline fp4_e2m1_t::operator float() const { return fp4_e2m1_to_float(*this); }
 
 inline fp4_e2m1_t float_to_fp4_e2m1(float x) {
   static constexpr float kTable[16] = {
@@ -243,49 +199,13 @@ inline fp4_e2m1_t float_to_fp4_e2m1(float x) {
   return fp4_e2m1_t{static_cast<uint8_t>(best & 0x0fu)};
 }
 
-inline fp4_e2m1_t::fp4_e2m1_t(float x) : bits(float_to_fp4_e2m1(x).bits) {}
-
-inline fp4_e2m1_t &fp4_e2m1_t::operator=(float x) {
-  bits = float_to_fp4_e2m1(x).bits;
-  return *this;
-}
-
 inline uint32_t lowp_word_from_fp16(fp16_t x) { return static_cast<uint32_t>(x.bits); }
-inline uint32_t lowp_word_from_bf16(bf16_t x) { return static_cast<uint32_t>(x.bits); }
 inline uint32_t lowp_word_from_fp8(fp8_e4m3_t x) { return static_cast<uint32_t>(x.bits); }
 inline uint32_t lowp_word_from_fp4(fp4_e2m1_t x) { return static_cast<uint32_t>(x.bits & 0x0fu); }
 
 inline fp16_t fp16_from_lowp_word(uint32_t word) { return fp16_t{static_cast<uint16_t>(word & 0xffffu)}; }
-inline bf16_t bf16_from_lowp_word(uint32_t word) { return bf16_t{static_cast<uint16_t>(word & 0xffffu)}; }
 inline fp8_e4m3_t fp8_from_lowp_word(uint32_t word) { return fp8_e4m3_t{static_cast<uint8_t>(word & 0xffu)}; }
 inline fp4_e2m1_t fp4_from_lowp_word(uint32_t word) { return fp4_e2m1_t{static_cast<uint8_t>(word & 0x0fu)}; }
-
-inline float bf16_to_float(bf16_t x) {
-  union {
-    uint32_t u;
-    float f;
-  } cvt = {static_cast<uint32_t>(x.bits) << 16};
-  return cvt.f;
-}
-
-inline bf16_t::operator float() const { return bf16_to_float(*this); }
-
-inline bf16_t float_to_bf16(float x) {
-  union {
-    float f;
-    uint32_t u;
-  } cvt = {x};
-  const uint32_t lsb = (cvt.u >> 16) & 1u;
-  const uint32_t rounded = cvt.u + 0x7fffu + lsb;
-  return bf16_t{static_cast<uint16_t>(rounded >> 16)};
-}
-
-inline bf16_t::bf16_t(float x) : bits(float_to_bf16(x).bits) {}
-
-inline bf16_t &bf16_t::operator=(float x) {
-  bits = float_to_bf16(x).bits;
-  return *this;
-}
 
 } // namespace pto
 

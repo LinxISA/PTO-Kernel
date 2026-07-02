@@ -226,7 +226,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
     #include "pto/cpu/MGatherScatter.hpp"
     #include "pto/cpu/TPrefetch.hpp"
     #include "pto/cpu/TInsert.hpp"
-    #include "pto/cpu/TConcat.hpp"
 #endif
 #endif // __LINXISA__
 

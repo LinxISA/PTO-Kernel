@@ -18,19 +18,6 @@
 #define PTO_QEMU_SMOKE 0
 #endif
 
-#ifndef PTO_HAS_LINX_LC_BUILTINS
-#if defined(__has_builtin)
-#if __has_builtin(__builtin_linx_lc0) && __has_builtin(__builtin_linx_lc1) && \
-    __has_builtin(__builtin_linx_lc2)
-#define PTO_HAS_LINX_LC_BUILTINS 1
-#else
-#define PTO_HAS_LINX_LC_BUILTINS 0
-#endif
-#else
-#define PTO_HAS_LINX_LC_BUILTINS 0
-#endif
-#endif
-
 #ifndef __mpar__
 #define __mpar__ inline __attribute__((always_inline)) \
   __attribute__((annotate("linx_mpar_kernel")))
@@ -50,11 +37,6 @@
 #else
 #define __vbuf__
 #endif
-#endif
-
-#ifndef BLKC_ASSIGN_CAST
-#define BLKC_ASSIGN_CAST(tile, idx, value) \
-  (pto::blkv::blkv_get_tile_ptr(tile)[(idx)] = (value))
 #endif
 
 namespace pto {
@@ -107,8 +89,7 @@ inline const typename TileT::DType *tile_ptr(const TileT &tile) {
 
 } // namespace detail
 
-#if defined(__LINXISA__) && !defined(PTO_HOST_SIM) && !PTO_QEMU_SMOKE && \
-    PTO_HAS_LINX_LC_BUILTINS
+#if defined(__LINXISA__) && !defined(PTO_HOST_SIM) && !PTO_QEMU_SMOKE
 inline uint16_t blkv_get_index_x() {
   return static_cast<uint16_t>(__builtin_linx_lc0());
 }

@@ -17,7 +17,7 @@ template <typename... Args>
 inline void Unsupported(const char *op_name) {
   (void)op_name;
   static_assert(dependent_false<Args...>::value,
-                "LinxISA v0.57: unsupported PTO op for __LINXISA__ backend");
+                "PTO Linx strict-v0.3: unsupported PTO op for __LINXISA__ backend");
 }
 
 } // namespace impl
@@ -99,17 +99,6 @@ inline void TEXP_IMPL(Dst &dst, Src &src) {
 template <typename Dst, typename Src>
 inline void TRECIP_IMPL(Dst &dst, Src &src) {
   TRECIP(dst, src);
-}
-
-template <typename Dst, typename Src0, typename Src1>
-inline void TCONCAT_IMPL(Dst &, Src0 &, Src1 &) {
-  linx::impl::Unsupported<Dst, Src0, Src1>("TCONCAT");
-}
-
-template <typename Dst, typename Src0, typename Src1, typename Src0Idx,
-          typename Src1Idx>
-inline void TCONCATIDX_IMPL(Dst &, Src0 &, Src1 &, Src0Idx &, Src1Idx &) {
-  linx::impl::Unsupported<Dst, Src0, Src1, Src0Idx, Src1Idx>("TCONCATIDX");
 }
 
 template <typename Dst, typename Src>

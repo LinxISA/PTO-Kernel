@@ -445,34 +445,6 @@ PTO_INST RecordEvent TINSERT_FP(DstTileData &dst, SrcTileData &src, FpTileData &
   return {};
 }
 
-template <typename DstTileData, typename Src0TileData, typename Src1TileData, typename... WaitEvents>
-PTO_INST RecordEvent TCONCAT(DstTileData &dst, Src0TileData &src0, Src1TileData &src1,
-                            WaitEvents&... events) {
-  TSYNC(events...);
-  MAP_INSTR_IMPL(TCONCAT, dst, src0, src1);
-  return {};
-}
-
-template <typename DstTileData, typename Src0TileData, typename Src1TileData,
-          typename Src0IdxTileData, typename Src1IdxTileData, typename... WaitEvents>
-PTO_INST RecordEvent TCONCATIDX(DstTileData &dst, Src0TileData &src0, Src1TileData &src1,
-                            Src0IdxTileData &src0Idx, Src1IdxTileData &src1Idx,
-                            WaitEvents&... events) {
-  TSYNC(events...);
-  MAP_INSTR_IMPL(TCONCATIDX, dst, src0, src1, src0Idx, src1Idx);
-  return {};
-}
-
-template <typename DstTileData, typename Src0TileData, typename Src1TileData,
-          typename Src0IdxTileData, typename Src1IdxTileData, typename... WaitEvents>
-PTO_INST RecordEvent TCONCAT(DstTileData &dst, Src0TileData &src0, Src1TileData &src1,
-                            Src0IdxTileData &src0Idx, Src1IdxTileData &src1Idx,
-                            WaitEvents&... events) {
-  TSYNC(events...);
-  MAP_INSTR_IMPL(TCONCATIDX, dst, src0, src1, src0Idx, src1Idx);
-  return {};
-}
-
 template <typename TileData, PadValue PadVal = PadValue::Zero, typename... WaitEvents>
 PTO_INST RecordEvent TFILLPAD(TileData &dst, TileData &src, WaitEvents&... events) {
   TSYNC(events...);
