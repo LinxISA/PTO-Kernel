@@ -507,8 +507,7 @@ inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs, unsigned e
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const int32_t a = static_cast<int32_t>(lhs.words[i]);
       const int32_t b = static_cast<int32_t>(rhs.words[i]);
-      out.words[i] =
-          (b == 0 || (a == INT32_MIN && b == -1)) ? 0u : static_cast<uint32_t>(a % b);
+      out.words[i] = b == 0 ? 0u : static_cast<uint32_t>(a % b);
     }
     break;
   }
@@ -516,8 +515,7 @@ inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs, unsigned e
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const int32_t a = static_cast<int32_t>(lhs.words[i]);
       const int32_t b = static_cast<int32_t>(rhs.words[i]);
-      out.words[i] =
-          (b == 0 || (a == INT32_MIN && b == -1)) ? 0u : static_cast<uint32_t>(a % b);
+      out.words[i] = b == 0 ? 0u : static_cast<uint32_t>(a % b);
     }
     break;
   }

@@ -54,7 +54,7 @@
 
 #ifndef BLKC_ASSIGN_CAST
 #define BLKC_ASSIGN_CAST(tile, idx, value) \
-  (pto::blkv::blkv_get_tile_ptr((tile))[(idx)] = (value))
+  (pto::blkv::blkv_get_tile_ptr(tile)[(idx)] = (value))
 #endif
 
 namespace pto {

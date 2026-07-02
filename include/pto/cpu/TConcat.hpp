@@ -39,9 +39,6 @@ PTO_INTERNAL std::size_t TCONCAT_COPY_ROW(DstTileData &dst, SrcTileData &src, st
 {
     const std::size_t dstCols = static_cast<std::size_t>(dst.GetValidCol());
     const std::size_t srcCols = static_cast<std::size_t>(src.GetValidCol());
-    if (dstCol >= dstCols) {
-        return 0;
-    }
     const std::size_t copyCols = std::min(cols, std::min(srcCols, dstCols - dstCol));
     for (std::size_t c = 0; c < copyCols; ++c) {
         dst.data()[GetTileElementOffset<DstTileData>(row, dstCol + c)] =
