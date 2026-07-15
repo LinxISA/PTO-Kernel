@@ -18,7 +18,6 @@ if str(SCRIPT.parent) not in sys.path:
     sys.path.insert(0, str(SCRIPT.parent))
 
 from kernel_catalog import load_kernel_catalog
-DEFAULT_WORKBOOK = Path("~/Documents/benchmark_master_list_completed.xlsx").expanduser()
 XML_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
@@ -307,10 +306,13 @@ def build_manifest(workbook_path: Path) -> dict[str, Any]:
     }
 
 
-def load_default_manifest() -> dict[str, Any] | None:
-    if not DEFAULT_WORKBOOK.exists():
+def load_manifest_if_available(workbook_path: Path | None) -> dict[str, Any] | None:
+    """Load an explicitly selected workbook, or omit workbook annotations."""
+    if workbook_path is None:
         return None
-    return build_manifest(DEFAULT_WORKBOOK)
+    if not workbook_path.is_file():
+        raise FileNotFoundError(f"workbook not found: {workbook_path}")
+    return build_manifest(workbook_path)
 
 
 def parity_kernel_names(manifest: dict[str, Any] | None = None) -> list[str]:
@@ -360,7 +362,11 @@ def _print_summary(manifest: dict[str, Any]) -> int:
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Parse the benchmark master workbook into a normalized manifest.")
-    parser.add_argument("--workbook", default=str(DEFAULT_WORKBOOK), help="Path to benchmark_master_list_completed.xlsx")
+    parser.add_argument(
+        "--workbook",
+        required=True,
+        help="Explicit path to benchmark_master_list_completed.xlsx",
+    )
     parser.add_argument("--format", choices=("summary", "json"), default="summary")
     args = parser.parse_args(argv)
 

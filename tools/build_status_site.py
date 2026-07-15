@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import argparse
+import hashlib
 import json
 import os
 import sys
@@ -15,14 +17,14 @@ DOCS_ROOT = PTO_ROOT / "docs"
 DEFAULT_PTO_ROOT = PTO_ROOT
 
 
-def load_manifest():
+def load_manifest(workbook_path: Path):
     pto_root = Path(os.environ.get("PTO_KERNELS_ROOT", DEFAULT_PTO_ROOT)).expanduser().resolve()
     sys.path.insert(0, str(pto_root / "tools"))
-    from benchmark_manifest import DEFAULT_WORKBOOK, build_manifest  # type: ignore
+    from benchmark_manifest import build_manifest  # type: ignore
     from kernel_catalog import load_kernel_catalog  # type: ignore
 
-    manifest = build_manifest(DEFAULT_WORKBOOK)
-    return pto_root, DEFAULT_WORKBOOK, manifest, load_kernel_catalog()
+    manifest = build_manifest(workbook_path)
+    return pto_root, workbook_path, manifest, load_kernel_catalog()
 
 
 def aggregate_kernels(manifest: dict, catalog: dict[str, str]) -> list[dict]:
@@ -105,15 +107,16 @@ def aggregate_backlog(manifest: dict) -> list[dict]:
     return backlog
 
 
-def build_payload() -> dict:
-    pto_root, workbook_path, manifest, catalog = load_manifest()
+def build_payload(workbook_path: Path) -> dict:
+    pto_root, workbook_path, manifest, catalog = load_manifest(workbook_path)
     summary = manifest["summary"]
 
     payload = {
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "source": {
             "pto_kernels_root": str(pto_root),
-            "workbook_path": str(workbook_path),
+            "workbook_path": workbook_path.name,
+            "workbook_sha256": hashlib.sha256(workbook_path.read_bytes()).hexdigest(),
         },
         "summary": summary,
         "kernels": aggregate_kernels(manifest, catalog),
@@ -124,8 +127,15 @@ def build_payload() -> dict:
     return payload
 
 
-def main() -> int:
-    payload = build_payload()
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description="Build the PTO kernel status site data.")
+    parser.add_argument("--workbook", required=True, help="Explicit benchmark workbook path")
+    args = parser.parse_args(argv)
+    workbook_path = Path(args.workbook).expanduser().resolve()
+    if not workbook_path.is_file():
+        raise SystemExit(f"error: workbook not found: {workbook_path}")
+
+    payload = build_payload(workbook_path)
     out_path = DOCS_ROOT / "data" / "status.json"
     out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"wrote {out_path}")
@@ -133,4 +143,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

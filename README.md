@@ -20,6 +20,9 @@ cmake -S . -B build
 cmake --build build -j"$(sysctl -n hw.ncpu 2>/dev/null || nproc)"
 ctest --test-dir build --output-on-failure
 
+# Add -DPTO_BENCHMARK_WORKBOOK=/path/to/benchmark_master_list_completed.xlsx
+# to enable the workbook-backed manifest test.
+
 cmake -S . -B build-linx -DPTO_ENABLE_LINX_CROSS=ON
 cmake --build build-linx --target pto_linx_contracts
 ```
@@ -47,4 +50,6 @@ cmake --build build-linx --target pto_linx_contracts
 ## Status Panel
 - site source: `docs/index.html`, `docs/assets/site.css`, `docs/assets/site.js`
 - generated data: `docs/data/status.json`
-- refresh command: `python3 tools/build_status_site.py`
+- refresh command: `python3 tools/build_status_site.py --workbook /path/to/benchmark_master_list_completed.xlsx`
+- manifest command: `python3 tools/benchmark_manifest.py --workbook /path/to/benchmark_master_list_completed.xlsx`
+- the workbook is always an explicit input; repository tools never search a home directory for it

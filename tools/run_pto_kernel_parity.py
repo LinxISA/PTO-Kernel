@@ -16,12 +16,9 @@ SCRIPT = Path(__file__).resolve()
 PTO_ROOT = SCRIPT.parents[1]
 sys.path.insert(0, str(SCRIPT.parent))
 
-from benchmark_manifest import benchmarks_by_parity_kernel, load_default_manifest, parity_kernel_names
+from benchmark_manifest import benchmarks_by_parity_kernel, load_manifest_if_available, parity_kernel_names
 from kernel_catalog import load_kernel_catalog
 
-MANIFEST = load_default_manifest()
-KERNEL_NAMES = parity_kernel_names(MANIFEST)
-KERNEL_BENCHMARKS = benchmarks_by_parity_kernel(MANIFEST)
 KERNEL_CATALOG = load_kernel_catalog()
 
 DIGEST_RE = re.compile(r"PTO_DIGEST\s+([A-Za-z0-9_]+)\s+0x([0-9A-Fa-f]+)")
@@ -118,22 +115,27 @@ def pick_clangxx(linxisa_root: Path | None) -> str:
     )
 
 
-def kernel_sources(linxisa_root: Path | None) -> list[Path]:
+def kernel_sources(linxisa_root: Path | None, kernel_names: list[str]) -> list[Path]:
     if linxisa_root:
         base = linxisa_root / "workloads" / "pto_kernels" / "kernels"
     else:
         base = PTO_ROOT / "kernels"
-    return [base / KERNEL_CATALOG[name] for name in KERNEL_NAMES]
+    return [base / KERNEL_CATALOG[name] for name in kernel_names]
 
 
-def build_and_run_host(clangxx: str, host_bin: Path, linxisa_root: Path) -> tuple[dict[str, str], str]:
+def build_and_run_host(
+    clangxx: str,
+    host_bin: Path,
+    linxisa_root: Path,
+    kernel_names: list[str],
+) -> tuple[dict[str, str], str]:
     harness = linxisa_root / "avs" / "qemu" / "tests" / "16_pto_kernel_parity.cpp"
     include_dir = linxisa_root / "workloads" / "pto_kernels" / "include"
 
     if not harness.exists():
         raise SystemExit(f"error: missing parity harness: {harness}")
 
-    sources = [str(harness), *[str(p) for p in kernel_sources(linxisa_root)]]
+    sources = [str(harness), *[str(p) for p in kernel_sources(linxisa_root, kernel_names)]]
     cmd = [
         clangxx,
         "-std=c++17",
@@ -192,20 +194,30 @@ def run_qemu_suite(linxisa_root: Path, timeout_s: float) -> tuple[dict[str, str]
     return parse_digests(text), text, cmd
 
 
-def write_reports(host: dict[str, str], qemu: dict[str, str], qemu_cmd: list[str], host_log: str, qemu_log: str, out_dir: Path) -> tuple[Path, Path, bool]:
+def write_reports(
+    host: dict[str, str],
+    qemu: dict[str, str],
+    qemu_cmd: list[str],
+    host_log: str,
+    qemu_log: str,
+    out_dir: Path,
+    manifest: dict | None,
+    kernel_names: list[str],
+    kernel_benchmarks: dict[str, list[dict[str, str]]],
+) -> tuple[Path, Path, bool]:
     out_dir.mkdir(parents=True, exist_ok=True)
     json_path = out_dir / "pto_kernel_parity_latest.json"
     md_path = out_dir / "pto_kernel_parity_latest.md"
 
     rows = []
     ok = True
-    for name in KERNEL_NAMES:
+    for name in kernel_names:
         hv = host.get(name)
         qv = qemu.get(name)
         match = hv is not None and qv is not None and hv == qv
         if not match:
             ok = False
-        benchmarks = KERNEL_BENCHMARKS.get(name, [])
+        benchmarks = kernel_benchmarks.get(name, [])
         rows.append(
             {
                 "kernel": name,
@@ -219,8 +231,8 @@ def write_reports(host: dict[str, str], qemu: dict[str, str], qemu_cmd: list[str
     payload = {
         "generated_at_utc": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "profile": "smoke",
-        "expected_kernels": KERNEL_NAMES,
-        "benchmark_manifest_loaded": MANIFEST is not None,
+        "expected_kernels": kernel_names,
+        "benchmark_manifest_loaded": manifest is not None,
         "host_digest_count": len(host),
         "qemu_digest_count": len(qemu),
         "all_match": ok,
@@ -235,7 +247,7 @@ def write_reports(host: dict[str, str], qemu: dict[str, str], qemu_cmd: list[str
         f"- Generated (UTC): `{payload['generated_at_utc']}`",
         "- Profile: `PTO_QEMU_SMOKE=1`",
         f"- All match: `{'YES' if ok else 'NO'}`",
-        f"- Workbook manifest loaded: `{'YES' if MANIFEST is not None else 'NO'}`",
+        f"- Workbook manifest loaded: `{'YES' if manifest is not None else 'NO'}`",
         "",
         "| Kernel | Benchmarks | Host Digest | QEMU Digest | Match |",
         "|---|---|---|---|---|",
@@ -269,7 +281,20 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Run PTO kernel parity (host-sim vs QEMU).")
     parser.add_argument("--timeout", type=float, default=180.0, help="QEMU timeout seconds")
     parser.add_argument("--out-dir", default=None, help="Optional report output directory")
+    parser.add_argument(
+        "--workbook",
+        default=None,
+        help="Optional explicit benchmark workbook path used to annotate parity results",
+    )
     args = parser.parse_args(argv)
+
+    workbook_path = Path(args.workbook).expanduser().resolve() if args.workbook else None
+    try:
+        manifest = load_manifest_if_available(workbook_path)
+    except FileNotFoundError as exc:
+        raise SystemExit(f"error: {exc}") from exc
+    kernel_names = parity_kernel_names(manifest)
+    kernel_benchmarks = benchmarks_by_parity_kernel(manifest)
 
     linxisa_root = detect_linxisa_root()
     if linxisa_root is None:
@@ -284,7 +309,7 @@ def main(argv: list[str]) -> int:
     clangxx = pick_clangxx(linxisa_root)
     host_bin = out_dir / "pto_kernel_parity_host"
 
-    host_digests, host_log = build_and_run_host(clangxx, host_bin, linxisa_root)
+    host_digests, host_log = build_and_run_host(clangxx, host_bin, linxisa_root, kernel_names)
     qemu_digests, qemu_log, qemu_cmd = run_qemu_suite(linxisa_root, args.timeout)
 
     json_path, md_path, ok = write_reports(
@@ -294,6 +319,9 @@ def main(argv: list[str]) -> int:
         host_log,
         qemu_log,
         out_dir,
+        manifest,
+        kernel_names,
+        kernel_benchmarks,
     )
 
     print(f"wrote {json_path}")

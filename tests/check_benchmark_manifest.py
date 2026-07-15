@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -10,7 +11,6 @@ PTO_ROOT = SCRIPT.parents[1]
 sys.path.insert(0, str(PTO_ROOT / "tools"))
 
 from benchmark_manifest import (  # noqa: E402
-    DEFAULT_WORKBOOK,
     PARITY_ROW_TO_KERNEL,
     PARITY_KERNEL_ORDER,
     build_manifest,
@@ -24,15 +24,17 @@ def require(cond: bool, message: str) -> None:
         raise SystemExit(f"error: {message}")
 
 
-def main() -> int:
-    if not DEFAULT_WORKBOOK.exists():
-        print(f"SKIP: workbook not found at {DEFAULT_WORKBOOK}")
-        return 0
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description="Validate an explicitly selected benchmark workbook.")
+    parser.add_argument("--workbook", required=True)
+    args = parser.parse_args(argv)
+    workbook = Path(args.workbook).expanduser().resolve()
+    require(workbook.is_file(), f"workbook not found: {workbook}")
 
-    manifest = build_manifest(DEFAULT_WORKBOOK)
+    manifest = build_manifest(workbook)
     summary = manifest["summary"]
     kernels = local_kernel_names()
-    tables = load_workbook_tables(DEFAULT_WORKBOOK)
+    tables = load_workbook_tables(workbook)
 
     require(summary["benchmark_count"] == 51, "expected 51 benchmark rows")
     require(summary["deliverable_now_count"] == 42, "expected 42 deliverable benchmark rows")
@@ -102,4 +104,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

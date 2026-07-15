@@ -1,8 +1,9 @@
 {
-  "generated_at_utc": "2026-04-11T02:26:46Z",
+  "generated_at_utc": "2026-07-15T10:28:55Z",
   "source": {
     "pto_kernels_root": "/Users/zhoubot/linx-isa/workloads/pto_kernels",
-    "workbook_path": "/Users/zhoubot/Documents/benchmark_master_list_completed.xlsx"
+    "workbook_path": "benchmark_master_list_completed.xlsx",
+    "workbook_sha256": "4355f51d3b13753d5f6c282cab989cc96e43f784f258320c499e5fc9d58a8671"
   },
   "summary": {
     "benchmark_count": 51,

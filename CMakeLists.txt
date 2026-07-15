@@ -3,6 +3,8 @@ project(PTOKernel LANGUAGES CXX)
 
 option(PTO_ENABLE_TESTS "Enable PTO-Kernel local tests" ON)
 option(PTO_ENABLE_LINX_CROSS "Enable Linx cross asm contract checks" OFF)
+set(PTO_BENCHMARK_WORKBOOK "" CACHE FILEPATH
+  "Explicit benchmark workbook used by the manifest validation test")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -29,9 +31,14 @@ if(PTO_ENABLE_TESTS)
     target_compile_definitions(pto_block_vector_smoke PRIVATE PTO_HOST_SIM=1)
     add_test(NAME pto_block_vector_smoke COMMAND pto_block_vector_smoke)
 
-    add_test(
-      NAME pto_benchmark_manifest
-      COMMAND ${PTO_PYTHON3} ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_benchmark_manifest.py)
+    if(PTO_BENCHMARK_WORKBOOK)
+      add_test(
+        NAME pto_benchmark_manifest
+        COMMAND ${PTO_PYTHON3} ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_benchmark_manifest.py
+                --workbook "${PTO_BENCHMARK_WORKBOOK}")
+    else()
+      message(STATUS "Skipping pto_benchmark_manifest: set PTO_BENCHMARK_WORKBOOK explicitly to enable it")
+    endif()
   endif()
 endif()
 
