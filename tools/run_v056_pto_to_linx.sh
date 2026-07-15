@@ -29,8 +29,6 @@ CXX="${CLANGXX:-${CLANG:-}}"
 if [[ -z "$CXX" ]]; then
   if [[ -n "${LINXISA_ROOT:-}" && -x "$LINXISA_ROOT/compiler/llvm/build-linxisa-clang/bin/clang++" ]]; then
     CXX="$LINXISA_ROOT/compiler/llvm/build-linxisa-clang/bin/clang++"
-  elif [[ -x "$HOME/llvm-project/build-linxisa-clang/bin/clang++" ]]; then
-    CXX="$HOME/llvm-project/build-linxisa-clang/bin/clang++"
   fi
 fi
 if [[ -z "$CXX" || ! -x "$CXX" ]]; then
@@ -95,7 +93,7 @@ check_no_forbidden_tokens() {
 check_tma_descriptor_headers() {
   local asm="$1"
   awk '
-    /BSTART\.T(LOAD|STORE)|BSTART\.(TMA|PAR)[[:space:]]+T(LOAD|STORE)/ {
+    /BSTART\.T(LOAD|STORE)|BSTART\.TMA[[:space:]]+T(LOAD|STORE)/ {
       inblk = 1
       seen_arg = 0
       seen_ior = 0
@@ -125,17 +123,17 @@ check_tma_descriptor_headers() {
 }
 
 declare -a KERNELS=()
-declare -A KERNEL_PATHS=()
+declare -a KERNEL_PATHS=()
 
 while IFS= read -r rel_path; do
   [[ -z "$rel_path" || "$rel_path" =~ ^# ]] && continue
   kernel="$(basename "$rel_path" .cpp)"
   KERNELS+=("$kernel")
-  KERNEL_PATHS["$kernel"]="$KERNEL_ROOT/$rel_path"
+  KERNEL_PATHS+=("$KERNEL_ROOT/$rel_path")
 done < "$CATALOG_FILE"
 
-for kernel in "${KERNELS[@]}"; do
-  compile_one "${KERNEL_PATHS[$kernel]}" "$OUT_DIR/${kernel}.s"
+for index in "${!KERNELS[@]}"; do
+  compile_one "${KERNEL_PATHS[$index]}" "$OUT_DIR/${KERNELS[$index]}.s"
 done
 
 for kernel in "${KERNELS[@]}"; do
@@ -145,14 +143,14 @@ for kernel in "${KERNELS[@]}"; do
 
 done
 
-grep -qE "BSTART\\.TLOAD|BSTART\\.(TMA|PAR)[[:space:]]+TLOAD" "$OUT_DIR/tload_store.s"
-grep -qE "BSTART\\.TSTORE|BSTART\\.(TMA|PAR)[[:space:]]+TSTORE" "$OUT_DIR/tload_store.s"
-grep -qE "BSTART\\.TMATMUL|BSTART\\.(CUBE|PAR)[[:space:]]+MAMULB," "$OUT_DIR/mamulb.s"
-grep -qE "BSTART\\.ACCCVT|BSTART\\.(CUBE|PAR)[[:space:]]+ACCCVT," "$OUT_DIR/mamulb.s"
-grep -qE "BSTART\\.TMATMUL\\.ACC|BSTART\\.(CUBE|PAR)[[:space:]]+MAMULB\\.ACC," "$OUT_DIR/tmatmul_acc.s"
-grep -qE "BSTART\\.ACCCVT|BSTART\\.(CUBE|PAR)[[:space:]]+ACCCVT," "$OUT_DIR/tmatmul_acc.s"
-grep -qE "BSTART\\.TMATMUL|BSTART\\.(CUBE|PAR)[[:space:]]+MAMULB," "$OUT_DIR/gemm.s"
-grep -qE "BSTART\\.TMATMUL|BSTART\\.(CUBE|PAR)[[:space:]]+MAMULB," "$OUT_DIR/flash_attention.s"
+grep -qE "BSTART\\.TLOAD|BSTART\\.TMA[[:space:]]+TLOAD" "$OUT_DIR/tload_store.s"
+grep -qE "BSTART\\.TSTORE|BSTART\\.TMA[[:space:]]+TSTORE" "$OUT_DIR/tload_store.s"
+grep -qE "BSTART\\.TMATMUL|BSTART\\.CUBE[[:space:]]+MAMULB," "$OUT_DIR/mamulb.s"
+grep -qE "BSTART\\.ACCCVT|BSTART\\.CUBE[[:space:]]+ACCCVT," "$OUT_DIR/mamulb.s"
+grep -qE "BSTART\\.TMATMUL\\.ACC|BSTART\\.CUBE[[:space:]]+MAMULB\\.ACC," "$OUT_DIR/tmatmul_acc.s"
+grep -qE "BSTART\\.ACCCVT|BSTART\\.CUBE[[:space:]]+ACCCVT," "$OUT_DIR/tmatmul_acc.s"
+grep -qE "BSTART\\.TMATMUL|BSTART\\.CUBE[[:space:]]+MAMULB," "$OUT_DIR/gemm.s"
+grep -qE "BSTART\\.TMATMUL|BSTART\\.CUBE[[:space:]]+MAMULB," "$OUT_DIR/flash_attention.s"
 grep -qE "BSTART\\.TEPL|BSTART\\.TEXPANDS|BSTART\\.TCOLEXPAND" "$OUT_DIR/flash_attention_masked.s"
 
 if [[ "${RUN_QEMU_TILE:-0}" == "1" ]]; then
@@ -165,22 +163,13 @@ if [[ "${RUN_QEMU_TILE:-0}" == "1" ]]; then
     CLANG_C="$CXX"
   fi
   QEMU_BIN="${QEMU:-}"
-  if [[ -z "$QEMU_BIN" ]]; then
-    for cand in "$HOME/qemu/build-tci/qemu-system-linx64" \
-                "$HOME/qemu/build-linx/qemu-system-linx64"; do
-      if [[ -x "$cand" ]]; then
-        QEMU_BIN="$cand"
-        break
-      fi
-    done
-  fi
-  QEMU_ARGS=()
-  if [[ -n "$QEMU_BIN" && -x "$QEMU_BIN" ]]; then
-    QEMU_ARGS+=(--qemu "$QEMU_BIN")
+  if [[ -z "$QEMU_BIN" || ! -x "$QEMU_BIN" ]]; then
+    echo "error: RUN_QEMU_TILE=1 requires QEMU to name an explicit executable" >&2
+    exit 1
   fi
   CLANG="$CLANG_C" CLANGXX="$CXX" python3 "$LINXISA_ROOT/avs/qemu/run_tests.py" \
     --suite tile --timeout "${QEMU_TIMEOUT:-60}" \
-    "${QEMU_ARGS[@]}" \
+    --qemu "$QEMU_BIN" \
     --require-test-id 0x000A0001 \
     --require-test-id 0x000A0002 \
     --require-test-id 0x000A0003 \
@@ -198,4 +187,4 @@ if [[ "${RUN_PTO_PARITY:-0}" == "1" ]]; then
     --timeout "${PTO_PARITY_TIMEOUT:-180}"
 fi
 
-echo "ok: generated PTO->Linx v0.3 assembly in $OUT_DIR"
+echo "ok: generated PTO->Linx v0.56 assembly in $OUT_DIR"
