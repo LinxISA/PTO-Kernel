@@ -46,7 +46,21 @@ using ptrdiff_builtin_t = __PTRDIFF_TYPE__;
 template <typename... Ts>
 using void_t = void;
 
-// TMA format selectors used by B.ARG in canonical v0.4.
+template <int Value>
+struct StaticIndex {
+  static constexpr int value = Value;
+  constexpr operator int() const { return Value; }
+};
+
+template <int Begin, int End, typename Fn>
+inline __attribute__((always_inline)) void static_for(Fn &&fn) {
+  if constexpr (Begin < End) {
+    fn(StaticIndex<Begin>{});
+    static_for<Begin + 1, End>(fn);
+  }
+}
+
+// TMA format selectors used by B.ARG in canonical v0.57.
 constexpr long long kLayoutNorm = 0ll;     // NORM.normal
 constexpr long long kLayoutND2NZ = 2ll;    // ND2NZ.normal
 constexpr long long kLayoutND2ZN = 3ll;    // ND2ZN.normal
@@ -59,14 +73,14 @@ constexpr unsigned tileBytes() {
   constexpr int cols = TileT::Cols;
   constexpr unsigned bytes =
       static_cast<unsigned>(rows * cols * sizeof(typename TileT::DType));
-  static_assert(bytes > 0u, "PTO Linx canonical v0.4: tile bytes must be positive");
+  static_assert(bytes > 0u, "PTO Linx canonical v0.57: tile bytes must be positive");
   return bytes;
 }
 
 template <typename TileT>
 constexpr unsigned tileSizeCode() {
   static_assert(tileBytes<TileT>() <= linx::detail::kMaxTileBytes,
-                "PTO Linx canonical v0.4: tile size exceeds 4KB");
+                "PTO Linx canonical v0.57: tile size exceeds 4KB");
   // Keep a single 4KB size profile in PR5 user-facing wrappers to avoid
   // cross-op metadata skew while strict Tile SSA balancing is enabled.
   return 8u;
@@ -363,7 +377,7 @@ inline void TMOV(DstTile &dst, const SrcTile &src, unsigned mode = 0u) {
 
 template <typename TileRes, typename TileLeft_, typename TileRight_>
 inline void TMATMUL(TileRes &dst, const TileLeft_ &lhs, const TileRight_ &rhs) {
-  // Canonical v0.4 compiler policy:
+  // Canonical v0.57 compiler policy:
   // tile_bytes = ceil(m*n*k*elem_bits/8) must fit <=4KB
   // (m=Rows, n=Cols, k=lhs.Cols).
   constexpr unsigned M = static_cast<unsigned>(TileRes::Rows);

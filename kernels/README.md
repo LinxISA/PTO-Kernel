@@ -30,7 +30,7 @@ All kernels:
 - iterate over large tensors with nested tile loops,
 - obey strict tile-byte legality (`<=4KB`) for both tile descriptors and TMATMUL footprints using
   `tile_bytes = ceil(dim0*dim1*dim2*elem_bits/8)` (`dim2=1` when absent).
-- use strict-v0.3 DataType encoding (`FP64/FP32/FP16/FP8/BF16/FPL8/FP4/FPL4`,
+- use strict-v0.57 DataType encoding (`FP64/FP32/FP16/FP8/BF16/FPL8/FP4/FPL4`,
   `INT64/INT32/INT16/INT8/INT4`, `UINT64/UINT32/UINT16/UINT8/UINT4`) in compiler and runtime checks.
 
 Runtime profile policy:

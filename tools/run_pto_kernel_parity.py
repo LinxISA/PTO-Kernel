@@ -83,16 +83,19 @@ def host_compiler_works(compiler: str) -> bool:
 
 
 def pick_clangxx(linxisa_root: Path | None) -> str:
-    env = os.environ.get("CLANGXX")
-    if env:
-        if host_compiler_works(env):
-            return env
+    host_env = os.environ.get("HOST_CXX")
+    if host_env:
+        if host_compiler_works(host_env):
+            return host_env
         raise SystemExit(
-            f"error: CLANGXX={env} cannot compile host C++ code; "
-            "set CLANGXX to a host compiler (for example /usr/bin/clang++)"
+            f"error: HOST_CXX={host_env} cannot compile host C++ code; "
+            "set HOST_CXX to a host compiler (for example /usr/bin/clang++)"
         )
 
     candidates: list[str] = []
+    env = os.environ.get("CLANGXX")
+    if env and host_compiler_works(env):
+        return env
     clangxx = shutil.which("clang++")
     if clangxx:
         candidates.append(clangxx)
@@ -120,7 +123,8 @@ def kernel_sources(linxisa_root: Path | None, kernel_names: list[str]) -> list[P
         base = linxisa_root / "workloads" / "pto_kernels" / "kernels"
     else:
         base = PTO_ROOT / "kernels"
-    return [base / KERNEL_CATALOG[name] for name in kernel_names]
+    selected = list(dict.fromkeys([*kernel_names, *KERNEL_CATALOG.keys()]))
+    return [base / KERNEL_CATALOG[name] for name in selected]
 
 
 def build_and_run_host(
@@ -176,9 +180,21 @@ def run_qemu_suite(linxisa_root: Path, timeout_s: float) -> tuple[dict[str, str]
         str(timeout_s),
         "--verbose",
     ]
+    qemu_env = os.environ.copy()
+    target_clangxx = qemu_env.get("PTO_TARGET_CLANGXX")
+    if not target_clangxx:
+        target_clangxx = str(
+            linxisa_root / "compiler" / "llvm" / "build-linxisa-clang" / "bin" / "clang++"
+        )
+    if not Path(target_clangxx).is_file():
+        raise SystemExit(
+            "error: target clang++ is unavailable; set PTO_TARGET_CLANGXX "
+            "to the Linx compiler"
+        )
+    qemu_env["CLANGXX"] = target_clangxx
     compile_and_run_timeout = timeout_s + 120.0
     try:
-        p = run(cmd, cwd=linxisa_root, timeout=compile_and_run_timeout)
+        p = run(cmd, cwd=linxisa_root, env=qemu_env, timeout=compile_and_run_timeout)
     except subprocess.TimeoutExpired as exc:
         out = (exc.stdout or "") + "\n" + (exc.stderr or "")
         if out:
@@ -312,6 +328,11 @@ def main(argv: list[str]) -> int:
     host_digests, host_log = build_and_run_host(clangxx, host_bin, linxisa_root, kernel_names)
     qemu_digests, qemu_log, qemu_cmd = run_qemu_suite(linxisa_root, args.timeout)
 
+    report_kernel_names = list(host_digests.keys())
+    for name in qemu_digests.keys():
+        if name not in report_kernel_names:
+            report_kernel_names.append(name)
+
     json_path, md_path, ok = write_reports(
         host_digests,
         qemu_digests,
@@ -320,7 +341,7 @@ def main(argv: list[str]) -> int:
         qemu_log,
         out_dir,
         manifest,
-        kernel_names,
+        report_kernel_names,
         kernel_benchmarks,
     )
 

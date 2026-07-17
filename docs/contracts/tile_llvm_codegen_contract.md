@@ -6,7 +6,7 @@ This contract defines expectations for Linx LLVM lowering from PTO kernels.
 
 - PTO kernels compile under Linx target triples with deterministic tile header
   emission.
-- Tile block descriptors are emitted in legal order for strict v0.3.
+- Tile block descriptors are emitted in legal order for strict v0.57.
 - Compile-time options can disable unstable SIMT autovec paths without changing
   PTO kernel source semantics.
 

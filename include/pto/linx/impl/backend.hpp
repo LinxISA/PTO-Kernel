@@ -95,7 +95,7 @@ struct is_floating_point<double> {
 template <typename T>
 struct DTypeCode {
   static_assert(dependent_false<T>::value,
-                "PTO Linx canonical v0.4: unsupported tile dtype");
+                "PTO Linx canonical v0.57: unsupported tile dtype");
 };
 
 template <>
@@ -220,7 +220,7 @@ constexpr unsigned dtypeElemCountForBytes(uint64_t bytes, unsigned dtype) {
 template <typename Scalar>
 inline long long encodeScalar(Scalar value) {
   static_assert(is_arithmetic<Scalar>::value,
-                "PTO Linx canonical v0.4: scalar operand must be arithmetic");
+                "PTO Linx canonical v0.57: scalar operand must be arithmetic");
   if constexpr (is_same<Scalar, pto::fp16_t>::value) {
     return static_cast<long long>(value.bits);
   } else if constexpr (is_same<Scalar, pto::fp8_e4m3_t>::value) {
@@ -455,7 +455,7 @@ template <unsigned SizeCode, unsigned DType, long long Layout, long long LB0,
           long long LB1, long long StrideBytes>
 inline RawTile tileTLoad(const void *base) {
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
-                "PTO Linx canonical v0.4: size_code must be in [5,8]");
+                "PTO Linx canonical v0.57: size_code must be in [5,8]");
 #if defined(PTO_HOST_SIM)
   (void)Layout;
   RawTile out{};
@@ -535,7 +535,7 @@ template <unsigned SizeCode, unsigned DType, long long Layout, long long LB0,
           long long LB1, long long StrideBytes>
 inline void tileTStore(void *base, RawTile tile) {
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
-                "PTO Linx canonical v0.4: size_code must be in [5,8]");
+                "PTO Linx canonical v0.57: size_code must be in [5,8]");
 #if defined(PTO_HOST_SIM)
   (void)Layout;
   const uint64_t bytes64 = sizeBytesFromCode(SizeCode);
@@ -608,7 +608,7 @@ inline void tileTStore(void *base, RawTile tile) {
 template <unsigned M, unsigned N, unsigned K>
 inline RawTile cubeMamulb(RawTile lhs, RawTile rhs) {
   static_assert(M <= 0xffu && N <= 0xffu && K <= 0xffu,
-                "PTO Linx canonical v0.4: cube dimensions must fit u8");
+                "PTO Linx canonical v0.57: cube dimensions must fit u8");
 #if defined(PTO_HOST_SIM)
   RawTile out{};
   for (unsigned i = 0; i < kTileWords; ++i)
@@ -640,7 +640,7 @@ inline RawTile cubeMamulb(RawTile lhs, RawTile rhs) {
 template <unsigned M, unsigned N, unsigned K>
 inline RawTile cubeMamulbAcc(RawTile acc, RawTile lhs, RawTile rhs) {
   static_assert(M <= 0xffu && N <= 0xffu && K <= 0xffu,
-                "PTO Linx canonical v0.4: cube dimensions must fit u8");
+                "PTO Linx canonical v0.57: cube dimensions must fit u8");
 #if defined(PTO_HOST_SIM)
   RawTile out = acc;
   for (unsigned i = 0; i < M; ++i) {
@@ -671,9 +671,9 @@ inline RawTile cubeMamulbAcc(RawTile acc, RawTile lhs, RawTile rhs) {
 template <unsigned TileOpcode, unsigned SizeCode, unsigned DType>
 inline RawTile teplUnary(RawTile src) {
   static_assert(TileOpcode <= 0x3ffu,
-                "PTO Linx canonical v0.4: TEPL tile opcode must fit u10");
+                "PTO Linx canonical v0.57: TEPL tile opcode must fit u10");
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
-                "PTO Linx canonical v0.4: size_code must be in [5,8]");
+                "PTO Linx canonical v0.57: size_code must be in [5,8]");
 #if defined(PTO_HOST_SIM)
   const uint64_t bytes64 = sizeBytesFromCode(SizeCode);
   const unsigned elem_bytes = dtypeElemBytesForStorage(DType);
@@ -690,9 +690,9 @@ inline RawTile teplUnary(RawTile src) {
 template <unsigned TileOpcode, unsigned SizeCode, unsigned DType>
 inline RawTile teplBinary(RawTile lhs, RawTile rhs) {
   static_assert(TileOpcode <= 0x3ffu,
-                "PTO Linx canonical v0.4: TEPL tile opcode must fit u10");
+                "PTO Linx canonical v0.57: TEPL tile opcode must fit u10");
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
-                "PTO Linx canonical v0.4: size_code must be in [5,8]");
+                "PTO Linx canonical v0.57: size_code must be in [5,8]");
 #if defined(PTO_HOST_SIM)
   const uint64_t bytes64 = sizeBytesFromCode(SizeCode);
   const unsigned elem_bytes = dtypeElemBytesForStorage(DType);
@@ -710,11 +710,11 @@ template <unsigned TileOpcode, unsigned SizeCode, unsigned DType, unsigned Mode,
           typename Scalar>
 inline RawTile teplBinaryScalar(RawTile lhs, Scalar scalar) {
   static_assert(TileOpcode <= 0x3ffu,
-                "PTO Linx canonical v0.4: TEPL tile opcode must fit u10");
+                "PTO Linx canonical v0.57: TEPL tile opcode must fit u10");
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
-                "PTO Linx canonical v0.4: size_code must be in [5,8]");
+                "PTO Linx canonical v0.57: size_code must be in [5,8]");
   static_assert(Mode == 1u,
-                "PTO Linx canonical v0.4: tepl.binary.scalar requires operand mode=VS(1)");
+                "PTO Linx canonical v0.57: tepl.binary.scalar requires operand mode=VS(1)");
 #if defined(PTO_HOST_SIM)
   RawTile rhs{};
   const uint64_t bytes64 = sizeBytesFromCode(SizeCode);
@@ -738,11 +738,11 @@ template <unsigned TileOpcode, unsigned SizeCode, unsigned DType, unsigned Mode,
           typename Scalar>
 inline RawTile teplSplat(Scalar scalar) {
   static_assert(TileOpcode <= 0x3ffu,
-                "PTO Linx canonical v0.4: TEPL tile opcode must fit u10");
+                "PTO Linx canonical v0.57: TEPL tile opcode must fit u10");
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
-                "PTO Linx canonical v0.4: size_code must be in [5,8]");
+                "PTO Linx canonical v0.57: size_code must be in [5,8]");
   static_assert(Mode == 2u,
-                "PTO Linx canonical v0.4: tepl.splat requires operand mode=SV(2)");
+                "PTO Linx canonical v0.57: tepl.splat requires operand mode=SV(2)");
 #if defined(PTO_HOST_SIM)
   RawTile out{};
   for (unsigned i = 0; i < kTileWords; ++i)
@@ -773,10 +773,10 @@ template <unsigned SizeCode, unsigned DType, long long Layout, unsigned HasLayou
           unsigned Mode>
 inline RawTile tileTMov(RawTile src) {
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
-                "PTO Linx canonical v0.4: size_code must be in [5,8]");
-  static_assert(HasLayout <= 1u, "PTO Linx canonical v0.4: has_layout must be bool");
+                "PTO Linx canonical v0.57: size_code must be in [5,8]");
+  static_assert(HasLayout <= 1u, "PTO Linx canonical v0.57: has_layout must be bool");
   static_assert(Mode <= 1u,
-                "PTO Linx canonical v0.4: tmov mode must be 0(V2V) or 1(A2V)");
+                "PTO Linx canonical v0.57: tmov mode must be 0(V2V) or 1(A2V)");
 #if defined(PTO_HOST_SIM)
   (void)DType;
   (void)Layout;
