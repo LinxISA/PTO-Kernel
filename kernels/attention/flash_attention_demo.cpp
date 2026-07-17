@@ -71,7 +71,8 @@ extern "C" void flash_attention_demo_f32(float *out_ptr, float *q_ptr,
   constexpr int kQBlocks = kS / kTm;
   constexpr int kKBlocks = kS / kTk;
 
-  for (int i = 0; i < kQBlocks; ++i) {
+  detail::static_for<0, kQBlocks>([&](auto i_c) {
+    constexpr int i = decltype(i_c)::value;
     tileQ tQ;
     TLOAD(tQ, gQ(i, 0));
 
@@ -81,7 +82,8 @@ extern "C" void flash_attention_demo_f32(float *out_ptr, float *q_ptr,
     tileO tO(0.0f);
     TEXPANDS(tMax, -1e30f);
 
-    for (int j = 0; j < kKBlocks; ++j) {
+    detail::static_for<0, kKBlocks>([&](auto j_c) {
+      constexpr int j = decltype(j_c)::value;
       tileK tK;
       tileV tV;
       TLOAD(tK, gK(0, j));
@@ -123,7 +125,7 @@ extern "C" void flash_attention_demo_f32(float *out_ptr, float *q_ptr,
       MATMACC(tOOut, tWLeft, tV);
       TCVT(tO, tOOut);
       tMax = tNewMax;
-    }
+    });
 
     tileSum tInvSum;
     tileO tInvExpanded;
@@ -132,6 +134,6 @@ extern "C" void flash_attention_demo_f32(float *out_ptr, float *q_ptr,
     TMUL(tO, tO, tInvExpanded);
 
     TSTORE(gO(i, 0), tO);
-  }
+  });
 #endif
 }

@@ -8,8 +8,9 @@ using namespace pto;
 #endif
 
 template <int S, int qD, int vD, int kTm, int kTk>
-void flash_attention_masked_frac(float *out_ptr, float *q_ptr, float *k_ptr,
-                                 float *v_ptr) {
+inline __attribute__((always_inline)) void
+flash_attention_masked_frac(float *out_ptr, float *q_ptr, float *k_ptr,
+                            float *v_ptr) {
   static_assert(kTm > 0 && qD > 0 && vD > 0 && kTk > 0,
                 "tile dimensions must be positive");
   static_assert(kTm * kTk * qD * static_cast<int>(sizeof(float)) <= 4096,
@@ -80,7 +81,8 @@ void flash_attention_masked_frac(float *out_ptr, float *q_ptr, float *k_ptr,
   itV gV(v_ptr);
   itO gO(out_ptr);
 
-  for (int i = 0; i < Qb; ++i) {
+  detail::static_for<0, Qb>([&](auto i_c) {
+    constexpr int i = decltype(i_c)::value;
     tileQ tQ;
     TLOAD(tQ, gQ(i, 0));
 
@@ -90,7 +92,8 @@ void flash_attention_masked_frac(float *out_ptr, float *q_ptr, float *k_ptr,
     tileO tO(0.0f);
     TEXPANDS(tMax, -1e30f);
 
-    for (int j = 0; j < Kb; ++j) {
+    detail::static_for<0, Kb>([&](auto j_c) {
+      constexpr int j = decltype(j_c)::value;
       tileK tK;
       tileV tV;
       TLOAD(tK, gK(0, j));
@@ -133,7 +136,7 @@ void flash_attention_masked_frac(float *out_ptr, float *q_ptr, float *k_ptr,
       MATMACC(tOOut, tWLeft, tV);
       TCVT(tO, tOOut);
       tMax = tNewMax;
-    }
+    });
 
     if constexpr (rK) {
       tileKCols tKTail;
@@ -186,7 +189,7 @@ void flash_attention_masked_frac(float *out_ptr, float *q_ptr, float *k_ptr,
     TEXPANDCOL(tInvExpanded, tInvSum);
     TMUL(tO, tO, tInvExpanded);
     TSTORE(gO(i, 0), tO);
-  }
+  });
 
   if constexpr (rQ) {
     tileQRows tQTail;
@@ -198,7 +201,8 @@ void flash_attention_masked_frac(float *out_ptr, float *q_ptr, float *k_ptr,
     tileORows tO(0.0f);
     TEXPANDS(tMax, -1e30f);
 
-    for (int j = 0; j < Kb; ++j) {
+    detail::static_for<0, Kb>([&](auto j_c) {
+      constexpr int j = decltype(j_c)::value;
       tileK tK;
       tileV tV;
       tileWOutRows tWOut;
@@ -241,7 +245,7 @@ void flash_attention_masked_frac(float *out_ptr, float *q_ptr, float *k_ptr,
       MATMACC(tOOut, tWLeft, tV);
       TCVT(tO, tOOut);
       tMax = tNewMax;
-    }
+    });
 
     if constexpr (rK) {
       tileKCols tKTail;

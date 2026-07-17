@@ -89,17 +89,6 @@ inline const typename TileT::DType *tile_ptr(const TileT &tile) {
 
 } // namespace detail
 
-#if defined(__LINXISA__) && !defined(PTO_HOST_SIM) && !PTO_QEMU_SMOKE
-inline uint16_t blkv_get_index_x() {
-  return static_cast<uint16_t>(__builtin_linx_lc0());
-}
-inline uint16_t blkv_get_index_y() {
-  return static_cast<uint16_t>(__builtin_linx_lc1());
-}
-inline uint16_t blkv_get_index_z() {
-  return static_cast<uint16_t>(__builtin_linx_lc2());
-}
-#else
 inline uint16_t blkv_get_index_x() {
   return static_cast<uint16_t>(detail::g_launch_state.x);
 }
@@ -109,7 +98,6 @@ inline uint16_t blkv_get_index_y() {
 inline uint16_t blkv_get_index_z() {
   return static_cast<uint16_t>(detail::g_launch_state.z);
 }
-#endif
 
 template <typename TileT>
 inline typename TileT::DType *blkv_get_tile_ptr(TileT *tile) {

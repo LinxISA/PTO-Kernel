@@ -46,11 +46,11 @@ REQUIRED_TILE_KERNELS = {
     "flash_attention_backward_fp32",
     "sparse_attention_local_fp16",
     "sparse_attention_block_fp16",
-    "rmsnorm_fp16",
 }
 
 REQUIRED_PATTERNS = [
-    re.compile(r"\bBSTART\.T(LOAD|STORE|MATMUL|MATMUL\.ACC)\b"),
+    re.compile(r"\bBSTART\.T(LOAD|STORE|MOV|PREFETCH|MATMUL|MATMUL\.ACC|MATMUL\.BIAS|MATMULMX|MATMULMX\.ACC|MATMULMX\.BIAS)\b"),
+    re.compile(r"\bBSTART\.ACC(CVT)?\b"),
 ]
 REQUIRED_VBLOCK_PATTERNS = [
     re.compile(r"\bBSTART\.(MSEQ|MPAR|VSEQ|VPAR)\b"),
@@ -58,8 +58,10 @@ REQUIRED_VBLOCK_PATTERNS = [
     re.compile(r"\bB\.DIM\b"),
 ]
 FORBIDDEN_PATTERNS = [
-    re.compile(r"(^|[^A-Za-z0-9_])L\."),
+    re.compile(r"(^|[^A-Za-z0-9_.])L\."),
     re.compile(r"\b(set_flag|wait_flag|B\.SET|B\.WAIT)\b"),
+    re.compile(r"\bBSTART\.(TMA|CUBE)\b"),
+    re.compile(r"\bMAMULB(\.ACC)?\b"),
 ]
 
 

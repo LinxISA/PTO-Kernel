@@ -83,9 +83,9 @@ has_tile_hand() {
 
 check_no_forbidden_tokens() {
   local asm="$1"
-  local forbidden_re='((^|[^A-Za-z0-9_])L\.|set_flag|wait_flag|TSync|B\.SET|B\.WAIT)'
-  if grep -Eiq "$forbidden_re" "$asm"; then
-    echo "error: forbidden v0.3 or non-auto-mode token found in $asm" >&2
+  local forbidden_re='((^|[^A-Za-z0-9_.])L\.|set_flag|wait_flag|TSync|B\.SET|B\.WAIT|BSTART\.TMA\b|BSTART\.CUBE\b|MAMULB)'
+  if grep -Eq "$forbidden_re" "$asm"; then
+    echo "error: forbidden legacy or non-auto-mode token found in $asm" >&2
     exit 1
   fi
 }
@@ -93,7 +93,7 @@ check_no_forbidden_tokens() {
 check_tma_descriptor_headers() {
   local asm="$1"
   awk '
-    /BSTART\.T(LOAD|STORE)|BSTART\.TMA[[:space:]]+T(LOAD|STORE)/ {
+    /BSTART\.T(LOAD|STORE)/ {
       inblk = 1
       seen_arg = 0
       seen_ior = 0
@@ -143,14 +143,14 @@ for kernel in "${KERNELS[@]}"; do
 
 done
 
-grep -qE "BSTART\\.TLOAD|BSTART\\.TMA[[:space:]]+TLOAD" "$OUT_DIR/tload_store.s"
-grep -qE "BSTART\\.TSTORE|BSTART\\.TMA[[:space:]]+TSTORE" "$OUT_DIR/tload_store.s"
-grep -qE "BSTART\\.TMATMUL|BSTART\\.CUBE[[:space:]]+MAMULB," "$OUT_DIR/mamulb.s"
-grep -qE "BSTART\\.ACCCVT|BSTART\\.CUBE[[:space:]]+ACCCVT," "$OUT_DIR/mamulb.s"
-grep -qE "BSTART\\.TMATMUL\\.ACC|BSTART\\.CUBE[[:space:]]+MAMULB\\.ACC," "$OUT_DIR/tmatmul_acc.s"
-grep -qE "BSTART\\.ACCCVT|BSTART\\.CUBE[[:space:]]+ACCCVT," "$OUT_DIR/tmatmul_acc.s"
-grep -qE "BSTART\\.TMATMUL|BSTART\\.CUBE[[:space:]]+MAMULB," "$OUT_DIR/gemm.s"
-grep -qE "BSTART\\.TMATMUL|BSTART\\.CUBE[[:space:]]+MAMULB," "$OUT_DIR/flash_attention.s"
+grep -qE "\\bBSTART\\.TLOAD\\b" "$OUT_DIR/tload_store.s"
+grep -qE "\\bBSTART\\.TSTORE\\b" "$OUT_DIR/tload_store.s"
+grep -qE "\\bBSTART\\.TMATMUL\\b" "$OUT_DIR/mamulb.s"
+grep -qE "\\bBSTART\\.ACCCVT\\b" "$OUT_DIR/mamulb.s"
+grep -qE "\\bBSTART\\.TMATMUL\\.ACC\\b" "$OUT_DIR/tmatmul_acc.s"
+grep -qE "\\bBSTART\\.ACCCVT\\b" "$OUT_DIR/tmatmul_acc.s"
+grep -qE "\\bBSTART\\.TMATMUL\\b" "$OUT_DIR/gemm.s"
+grep -qE "\\bBSTART\\.TMATMUL\\b" "$OUT_DIR/flash_attention.s"
 grep -qE "BSTART\\.TEPL|BSTART\\.TEXPANDS|BSTART\\.TCOLEXPAND" "$OUT_DIR/flash_attention_masked.s"
 
 if [[ "${RUN_QEMU_TILE:-0}" == "1" ]]; then
@@ -187,4 +187,4 @@ if [[ "${RUN_PTO_PARITY:-0}" == "1" ]]; then
     --timeout "${PTO_PARITY_TIMEOUT:-180}"
 fi
 
-echo "ok: generated PTO->Linx v0.56 assembly in $OUT_DIR"
+echo "ok: generated PTO->Linx v0.57 assembly in $OUT_DIR"

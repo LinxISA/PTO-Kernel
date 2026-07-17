@@ -122,10 +122,11 @@ extern "C" void mla_attention_demo_f32(float *out_ptr, float *q_ptr,
   constexpr int kKBlocks = kS / kTm;
   constexpr int kDChunks = kD / kTk;
 
-  tileWo tWo;
-  TLOAD(tWo, gWo(0, 0));
+  detail::static_for<0, kQBlocks>([&](auto qi_c) {
+    constexpr int qi = decltype(qi_c)::value;
+    tileWo tWo;
+    TLOAD(tWo, gWo(0, 0));
 
-  for (int qi = 0; qi < kQBlocks; ++qi) {
     tileIn q0;
     tileProjW wq0;
     TLOAD(q0, gQ(qi, 0));
@@ -134,13 +135,14 @@ extern "C" void mla_attention_demo_f32(float *out_ptr, float *q_ptr,
     tileProjAcc qLatAcc;
     TMATMUL(qLatAcc, q0, wq0);
 
-    for (int dk = 1; dk < kDChunks; ++dk) {
+    detail::static_for<1, kDChunks>([&](auto dk_c) {
+      constexpr int dk = decltype(dk_c)::value;
       tileIn q;
       tileProjW wq;
       TLOAD(q, gQ(qi, dk));
       TLOAD(wq, gWq(dk, 0));
       TMATMUL_ACC(qLatAcc, qLatAcc, q, wq);
-    }
+    });
 
     tileProjVec qLatVec;
     tileProjLeft qLatLeft;
@@ -149,7 +151,8 @@ extern "C" void mla_attention_demo_f32(float *out_ptr, float *q_ptr,
 
     tileCtxVec ctxVec(0.0f);
 
-    for (int kj = 0; kj < kKBlocks; ++kj) {
+    detail::static_for<0, kKBlocks>([&](auto kj_c) {
+      constexpr int kj = decltype(kj_c)::value;
       tileIn k0;
       tileProjW wk0;
       tileIn v0;
@@ -164,7 +167,8 @@ extern "C" void mla_attention_demo_f32(float *out_ptr, float *q_ptr,
       TMATMUL(kLatAcc, k0, wk0);
       TMATMUL(vLatAcc, v0, wv0);
 
-      for (int dk = 1; dk < kDChunks; ++dk) {
+      detail::static_for<1, kDChunks>([&](auto dk_c) {
+        constexpr int dk = decltype(dk_c)::value;
         tileIn k;
         tileProjW wk;
         tileIn v;
@@ -175,7 +179,7 @@ extern "C" void mla_attention_demo_f32(float *out_ptr, float *q_ptr,
         TLOAD(wv, gWv(dk, 0));
         TMATMUL_ACC(kLatAcc, kLatAcc, k, wk);
         TMATMUL_ACC(vLatAcc, vLatAcc, v, wv);
-      }
+      });
 
       tileProjRight kLatRight;
       tileProjRight vLatRight;
@@ -214,8 +218,8 @@ extern "C" void mla_attention_demo_f32(float *out_ptr, float *q_ptr,
       TMATMUL(scoreAcc, scoreLeft, vLatRight);
       TCVT(ctxPiece, scoreAcc);
       TADD(ctxMerged, ctxVec, ctxPiece);
-      ctxVec = ctxMerged;
-    }
+      TMOV(ctxVec, ctxMerged);
+    });
 
     tileCtxLeft ctxLeft;
     tileOutAcc outAcc;
@@ -224,6 +228,6 @@ extern "C" void mla_attention_demo_f32(float *out_ptr, float *q_ptr,
     TMATMUL(outAcc, ctxLeft, tWo);
     TCVT(outVec, outAcc);
     TSTORE(gO(qi, 0), outVec);
-  }
+  });
 #endif
 }

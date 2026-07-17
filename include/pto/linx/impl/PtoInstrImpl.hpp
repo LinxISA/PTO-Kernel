@@ -17,7 +17,7 @@ template <typename... Args>
 inline void Unsupported(const char *op_name) {
   (void)op_name;
   static_assert(dependent_false<Args...>::value,
-                "PTO Linx strict-v0.3: unsupported PTO op for __LINXISA__ backend");
+                "PTO Linx strict-v0.57: unsupported PTO op for __LINXISA__ backend");
 }
 
 } // namespace impl
