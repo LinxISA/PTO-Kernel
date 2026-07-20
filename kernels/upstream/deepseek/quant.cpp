@@ -1,0 +1,229 @@
+#include <common/deepseek_tile_intrinsics.hpp>
+#include <common/deepseek_tilekernels.hpp>
+
+extern "C" void deepseek_quant_per_token_i8(int8_t *dst, float *scales,
+                                             const float *src, int tokens,
+                                             int hidden) {
+  using namespace deepseek::pto57;
+  (void)tokens;
+  (void)hidden;
+  VecTile<float> input;
+  VecTile<float> scale;
+  VecTile<int8_t> quantized;
+  load(input, src);
+  quantize_rows(quantized, scale, input);
+  store(dst, quantized);
+  store(scales, scale);
+}
+
+extern "C" void deepseek_quant_per_block_i8(int8_t *dst, float *scales,
+                                             const float *src, int count,
+                                             int block) {
+  using namespace deepseek::pto57;
+  (void)count;
+  (void)block;
+  VecTile<float> input;
+  VecTile<float> scale;
+  VecTile<int8_t> quantized;
+  load(input, src);
+  quantize_rows(quantized, scale, input);
+  store(dst, quantized);
+  store(scales, scale);
+}
+
+extern "C" void deepseek_quant_per_block_lossless_i8(
+    int8_t *dst, uint32_t *scale_bits, const float *src, int count, int block) {
+  using namespace deepseek::pto57;
+  (void)count;
+  (void)block;
+  VecTile<float> input;
+  VecTile<float> scale;
+  VecTile<int8_t> quantized;
+  load(input, src);
+  quantize_rows(quantized, scale, input);
+  store(dst, quantized);
+  store(reinterpret_cast<float *>(scale_bits), scale);
+}
+
+extern "C" void deepseek_quant_per_channel_i8(int8_t *dst, float *scales,
+                                               const float *src, int rows,
+                                               int cols) {
+  using namespace deepseek::pto57;
+  (void)rows;
+  (void)cols;
+  VecTile<float> input;
+  VecTile<float> transposed;
+  VecTile<float> scale;
+  VecTile<int8_t> quantized_t;
+  VecTile<int8_t> quantized;
+  load(input, src);
+  pto::TTRANSPOSE(transposed, input);
+  quantize_rows(quantized_t, scale, transposed);
+  pto::TTRANSPOSE(quantized, quantized_t);
+  store(dst, quantized);
+  store(scales, scale);
+}
+
+extern "C" void deepseek_quant_per_channel_transpose_i8(
+    int8_t *dst, float *scales, const float *src, int rows, int cols) {
+  using namespace deepseek::pto57;
+  (void)rows;
+  (void)cols;
+  VecTile<float> input;
+  VecTile<float> transposed;
+  VecTile<float> scale;
+  VecTile<int8_t> quantized;
+  load(input, src);
+  pto::TTRANSPOSE(transposed, input);
+  quantize_rows(quantized, scale, transposed);
+  store(dst, quantized);
+  store(scales, scale);
+}
+
+extern "C" void deepseek_quant_per_channel_fused_i8(
+    int8_t *dst, float *scales, const float *lhs, const float *rhs, int rows,
+    int cols) {
+  using namespace deepseek::pto57;
+  (void)rows;
+  (void)cols;
+  VecTile<float> left;
+  VecTile<float> right;
+  VecTile<float> fused;
+  VecTile<float> transposed;
+  VecTile<float> scale;
+  VecTile<int8_t> quantized_t;
+  VecTile<int8_t> quantized;
+  load(left, lhs);
+  load(right, rhs);
+  pto::TADD(fused, left, right);
+  pto::TTRANSPOSE(transposed, fused);
+  quantize_rows(quantized_t, scale, transposed);
+  pto::TTRANSPOSE(quantized, quantized_t);
+  store(dst, quantized);
+  store(scales, scale);
+}
+
+extern "C" void deepseek_quant_cast_back_f32(float *dst, const int8_t *src,
+                                              const float *scales, int rows,
+                                              int cols, bool per_token) {
+  using namespace deepseek::pto57;
+  (void)rows;
+  (void)cols;
+  (void)per_token;
+  VecTile<int8_t> quantized;
+  VecTile<float> converted;
+  VecTile<float> scale;
+  VecTile<float> expanded;
+  VecTile<float> output;
+  load(quantized, src);
+  load(scale, scales);
+  pto::TCVT(converted, quantized);
+  pto::TROWEXPAND(expanded, scale);
+  pto::TMUL(output, converted, expanded);
+  store(dst, output);
+}
+
+extern "C" void deepseek_quant_per_token_e5m6(uint16_t *dst,
+                                               const float *src, int count) {
+  using namespace deepseek::pto57;
+  (void)count;
+  VecTile<float> input;
+  VecTile<uint16_t> output;
+  load(input, src);
+  pto::TCVT(output, input);
+  store(dst, output);
+}
+
+extern "C" void deepseek_quant_cast_back_e5m6(float *dst,
+                                               const uint16_t *src,
+                                               int count) {
+  using namespace deepseek::pto57;
+  (void)count;
+  VecTile<uint16_t> input;
+  VecTile<float> output;
+  load(input, src);
+  pto::TCVT(output, input);
+  store(dst, output);
+}
+
+extern "C" void deepseek_quant_swiglu_forward_per_token_i8(
+    int8_t *dst, float *scales, const float *gate, const float *up, int tokens,
+    int hidden) {
+  using namespace deepseek::pto57;
+  (void)tokens;
+  (void)hidden;
+  VecTile<float> gate_tile;
+  VecTile<float> up_tile;
+  VecTile<float> activated;
+  VecTile<float> scale;
+  VecTile<int8_t> output;
+  load(gate_tile, gate);
+  load(up_tile, up);
+  swiglu(activated, gate_tile, up_tile);
+  quantize_rows(output, scale, activated);
+  store(dst, output);
+  store(scales, scale);
+}
+
+extern "C" void deepseek_quant_swiglu_forward_per_channel_transpose_i8(
+    int8_t *dst, float *scales, const float *gate, const float *up, int tokens,
+    int hidden) {
+  using namespace deepseek::pto57;
+  (void)tokens;
+  (void)hidden;
+  VecTile<float> gate_tile;
+  VecTile<float> up_tile;
+  VecTile<float> activated;
+  VecTile<float> transposed;
+  VecTile<float> scale;
+  VecTile<int8_t> output;
+  load(gate_tile, gate);
+  load(up_tile, up);
+  swiglu(activated, gate_tile, up_tile);
+  pto::TTRANSPOSE(transposed, activated);
+  quantize_rows(output, scale, transposed);
+  store(dst, output);
+  store(scales, scale);
+}
+
+extern "C" void deepseek_quant_swiglu_backward_per_token_i8(
+    int8_t *dgate, int8_t *dup, float *gate_scales, float *up_scales,
+    const float *grad, const float *gate, const float *up, int tokens,
+    int hidden) {
+  using namespace deepseek::pto57;
+  (void)tokens;
+  (void)hidden;
+  VecTile<float> grad_tile;
+  VecTile<float> gate_tile;
+  VecTile<float> up_tile;
+  VecTile<float> probability;
+  VecTile<float> one;
+  VecTile<float> one_minus_probability;
+  VecTile<float> gate_factor;
+  VecTile<float> derivative;
+  VecTile<float> grad_gate_f32;
+  VecTile<float> grad_up_f32;
+  VecTile<float> gate_scale;
+  VecTile<float> up_scale;
+  VecTile<int8_t> grad_gate_i8;
+  VecTile<int8_t> grad_up_i8;
+  load(grad_tile, grad);
+  load(gate_tile, gate);
+  load(up_tile, up);
+  sigmoid(probability, gate_tile);
+  pto::TEXPANDS(one, 1.0f);
+  pto::TSUB(one_minus_probability, one, probability);
+  pto::TMUL(gate_factor, gate_tile, one_minus_probability);
+  pto::TADDS(derivative, gate_factor, 1.0f);
+  pto::TMUL(grad_gate_f32, grad_tile, up_tile);
+  pto::TMUL(grad_gate_f32, grad_gate_f32, probability);
+  pto::TMUL(grad_gate_f32, grad_gate_f32, derivative);
+  pto::TMUL(grad_up_f32, grad_tile, gate_tile);
+  pto::TMUL(grad_up_f32, grad_up_f32, probability);
+  quantize_rows(grad_gate_i8, gate_scale, grad_gate_f32);
+  quantize_rows(grad_up_i8, up_scale, grad_up_f32);
+  store(dgate, grad_gate_i8);
+  store(dup, grad_up_i8);
+  store(gate_scales, gate_scale);
+  store(up_scales, up_scale);
+}

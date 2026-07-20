@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "upstream": {
+    "repository": "https://github.com/deepseek-ai/TileKernels",
+    "branch": "main",
+    "commit": "36d9e45d38e204ebb87e6f6e833821eee0482fe5",
+    "license": "MIT"
+  },
+  "integration": {
+    "runtime_dependencies": [],
+    "target": "Linx ISA v0.57 PTO intrinsics",
+    "kernel_contract": "loop-free PTO ISA data paths; scalar code is limited to ABI/control setup and external test oracles",
+    "closure_shape": "32x32 row-major canonical tile",
+    "verification": "freestanding compile/encoding audit and QEMU standard-input oracle"
+  },
+  "families": {
+    "engram": {
+      "sources": [
+        "engram_fused_weight_kernel.py",
+        "engram_gate_kernel.py",
+        "engram_grad_w_reduce_kernel.py",
+        "engram_hash_kernel.py"
+      ],
+      "ports": {
+        "engram_fused_weight_kernel.py": [
+          "deepseek_engram_fused_weight_f32"
+        ],
+        "engram_gate_kernel.py": [
+          "deepseek_engram_gate_fwd_f32",
+          "deepseek_engram_gate_bwd_f32"
+        ],
+        "engram_grad_w_reduce_kernel.py": [
+          "deepseek_engram_grad_w_reduce_f32"
+        ],
+        "engram_hash_kernel.py": [
+          "deepseek_engram_hash_i32"
+        ]
+      },
+      "status": "implemented"
+    },
+    "mhc": {
+      "sources": [
+        "expand_kernel.py",
+        "head_compute_mix_kernel.py",
+        "multilayer_recompute_kernel.py",
+        "norm_fn_kernel.py",
+        "post_kernel.py",
+        "pre_apply_mix_kernel.py",
+        "pre_big_fuse_kernel.py",
+        "pre_split_mixes_kernel.py",
+        "sinkhorn_kernel.py"
+      ],
+      "ports": {
+        "expand_kernel.py": [
+          "deepseek_mhc_expand_fwd_f32",
+          "deepseek_mhc_expand_bwd_f32"
+        ],
+        "head_compute_mix_kernel.py": [
+          "deepseek_mhc_head_compute_mix_fwd_f32",
+          "deepseek_mhc_head_compute_mix_bwd_f32"
+        ],
+        "multilayer_recompute_kernel.py": [
+          "deepseek_mhc_multilayer_recompute_f32"
+        ],
+        "norm_fn_kernel.py": [
+          "deepseek_mhc_norm_fwd_f32"
+        ],
+        "post_kernel.py": [
+          "deepseek_mhc_post_fwd_f32",
+          "deepseek_mhc_post_bwd_f32"
+        ],
+        "pre_apply_mix_kernel.py": [
+          "deepseek_mhc_pre_apply_mix_f32"
+        ],
+        "pre_big_fuse_kernel.py": [
+          "deepseek_mhc_pre_big_fuse_f32"
+        ],
+        "pre_split_mixes_kernel.py": [
+          "deepseek_mhc_pre_split_mixes_fwd_f32",
+          "deepseek_mhc_pre_split_mixes_bwd_f32"
+        ],
+        "sinkhorn_kernel.py": [
+          "deepseek_mhc_sinkhorn_f32",
+          "deepseek_mhc_sinkhorn_backward_f32"
+        ]
+      },
+      "status": "implemented"
+    },
+    "moe": {
+      "sources": [
+        "aux_fi_kernel.py",
+        "expand_to_fused_kernel.py",
+        "get_fused_mapping_kernel.py",
+        "group_count_kernel.py",
+        "inplace_unique_group_indices_kernel.py",
+        "mask_indices_by_tp_kernel.py",
+        "normalize_weight_kernel.py",
+        "reduce_fused_kernel.py",
+        "top2_sum_gate_kernel.py",
+        "topk_gate_kernel.py",
+        "topk_sum_and_topk_group_idx_kernel.py"
+      ],
+      "ports": {
+        "aux_fi_kernel.py": [
+          "deepseek_moe_aux_fi_f32"
+        ],
+        "expand_to_fused_kernel.py": [
+          "deepseek_moe_expand_to_fused_f32"
+        ],
+        "get_fused_mapping_kernel.py": [
+          "deepseek_moe_get_fused_mapping_i32"
+        ],
+        "group_count_kernel.py": [
+          "deepseek_moe_group_count_i32"
+        ],
+        "inplace_unique_group_indices_kernel.py": [
+          "deepseek_moe_unique_group_indices_i32"
+        ],
+        "mask_indices_by_tp_kernel.py": [
+          "deepseek_moe_mask_indices_by_tp_i32"
+        ],
+        "normalize_weight_kernel.py": [
+          "deepseek_moe_normalize_weight_f32"
+        ],
+        "reduce_fused_kernel.py": [
+          "deepseek_moe_reduce_fused_f32"
+        ],
+        "top2_sum_gate_kernel.py": [
+          "deepseek_moe_top2_sum_gate_f32"
+        ],
+        "topk_gate_kernel.py": [
+          "deepseek_moe_topk_gate_f32"
+        ],
+        "topk_sum_and_topk_group_idx_kernel.py": [
+          "deepseek_moe_topk_sum_group_f32"
+        ]
+      },
+      "status": "implemented"
+    },
+    "quant": {
+      "sources": [
+        "cast_back_e5m6_kernel.py",
+        "cast_back_kernel.py",
+        "per_block_cast_kernel.py",
+        "per_block_cast_lossless_kernel.py",
+        "per_channel_cast_and_transpose_kernel.py",
+        "per_channel_cast_fused_kernel.py",
+        "per_channel_cast_kernel.py",
+        "per_token_cast_kernel.py",
+        "per_token_cast_to_e5m6_kernel.py",
+        "swiglu_backward_and_per_token_cast_kernel.py",
+        "swiglu_forward_and_per_channel_cast_and_transpose_kernel.py",
+        "swiglu_forward_and_per_token_cast_kernel.py"
+      ],
+      "ports": {
+        "cast_back_e5m6_kernel.py": [
+          "deepseek_quant_cast_back_e5m6"
+        ],
+        "cast_back_kernel.py": [
+          "deepseek_quant_cast_back_f32"
+        ],
+        "per_block_cast_kernel.py": [
+          "deepseek_quant_per_block_i8"
+        ],
+        "per_block_cast_lossless_kernel.py": [
+          "deepseek_quant_per_block_lossless_i8"
+        ],
+        "per_channel_cast_and_transpose_kernel.py": [
+          "deepseek_quant_per_channel_transpose_i8"
+        ],
+        "per_channel_cast_fused_kernel.py": [
+          "deepseek_quant_per_channel_fused_i8"
+        ],
+        "per_channel_cast_kernel.py": [
+          "deepseek_quant_per_channel_i8"
+        ],
+        "per_token_cast_kernel.py": [
+          "deepseek_quant_per_token_i8"
+        ],
+        "per_token_cast_to_e5m6_kernel.py": [
+          "deepseek_quant_per_token_e5m6"
+        ],
+        "swiglu_backward_and_per_token_cast_kernel.py": [
+          "deepseek_quant_swiglu_backward_per_token_i8"
+        ],
+        "swiglu_forward_and_per_channel_cast_and_transpose_kernel.py": [
+          "deepseek_quant_swiglu_forward_per_channel_transpose_i8"
+        ],
+        "swiglu_forward_and_per_token_cast_kernel.py": [
+          "deepseek_quant_swiglu_forward_per_token_i8"
+        ]
+      },
+      "status": "implemented"
+    },
+    "transpose": {
+      "sources": [
+        "batched_transpose_kernel.py"
+      ],
+      "ports": {
+        "batched_transpose_kernel.py": [
+          "deepseek_batched_transpose_f32"
+        ]
+      },
+      "status": "implemented"
+    }
+  }
+}

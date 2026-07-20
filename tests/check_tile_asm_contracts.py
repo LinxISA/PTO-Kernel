@@ -46,7 +46,13 @@ REQUIRED_TILE_KERNELS = {
     "flash_attention_backward_fp32",
     "sparse_attention_local_fp16",
     "sparse_attention_block_fp16",
+    "engram",
+    "mhc",
+    "moe",
+    "quant",
+    "transpose",
 }
+DEEPSEEK_TILE_KERNELS = {"engram", "mhc", "moe", "quant", "transpose"}
 
 REQUIRED_PATTERNS = [
     re.compile(r"\bBSTART\.T(LOAD|STORE|MOV|PREFETCH|MATMUL|MATMUL\.ACC|MATMUL\.BIAS|MATMULMX|MATMULMX\.ACC|MATMULMX\.BIAS)\b"),
@@ -64,6 +70,11 @@ FORBIDDEN_PATTERNS = [
     re.compile(r"\bMAMULB(\.ACC)?\b"),
 ]
 
+TEPL_BSTART = re.compile(
+    r"^\s*BSTART\.T(?!LOAD\b|STORE\b|MOV\b|PREFETCH\b|MATMUL).*",
+    re.MULTILINE,
+)
+
 
 def check_file(path: Path) -> list[str]:
     text = path.read_text(encoding="utf-8", errors="ignore")
@@ -75,6 +86,24 @@ def check_file(path: Path) -> list[str]:
             f"missing required Linx block marker (tile BSTART.T* or launched "
             f"BSTART.(MSEQ|MPAR|VSEQ|VPAR) with B.TEXT/B.DIM): {path}"
         )
+    if path.stem in DEEPSEEK_TILE_KERNELS:
+        starts = list(TEPL_BSTART.finditer(text))
+        if not starts:
+            errors.append(f"missing PTO TEPL compute block: {path}")
+        for start in starts:
+            tail = text[start.end() :].splitlines()
+            following = [
+                line.strip()
+                for line in tail
+                if line.strip() and not line.lstrip().startswith("#")
+            ][:2]
+            if len(following) != 2 or not all(
+                line.startswith("C.B.DIMI") for line in following
+            ):
+                errors.append(
+                    f"TEPL block lacks adjacent canonical LB0/LB1 dimensions: "
+                    f"{path}:{text.count(chr(10), 0, start.start()) + 1}"
+                )
     for pat in FORBIDDEN_PATTERNS:
         if pat.search(text):
             errors.append(f"forbidden pattern '{pat.pattern}' found: {path}")

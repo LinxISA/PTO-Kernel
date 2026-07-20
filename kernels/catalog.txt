@@ -75,3 +75,8 @@ routing/moe_gate_route_fp16.cpp
 routing/moe_mlp_fp16.cpp
 routing/moe_sort_fp32.cpp
 routing/moe_topk_fp32.cpp
+upstream/deepseek/engram.cpp
+upstream/deepseek/mhc.cpp
+upstream/deepseek/moe.cpp
+upstream/deepseek/quant.cpp
+upstream/deepseek/transpose.cpp
