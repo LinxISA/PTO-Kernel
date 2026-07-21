@@ -12,130 +12,126 @@ namespace pto {
 namespace linx {
 namespace detail {
 
-template <typename... Ts>
-struct dependent_false {
+template <typename... Ts> struct dependent_false {
   static constexpr bool value = false;
 };
 
-template <typename A, typename B>
-struct is_same {
+template <typename A, typename B> struct is_same {
   static constexpr bool value = false;
 };
 
-template <typename T>
-struct is_same<T, T> {
+template <typename T> struct is_same<T, T> {
   static constexpr bool value = true;
 };
 
-template <typename T>
-struct is_arithmetic {
+template <typename T> struct is_arithmetic {
   static constexpr bool value = false;
 };
 
-template <>
-struct is_arithmetic<int> {
+template <> struct is_arithmetic<int> {
   static constexpr bool value = true;
 };
 
-template <>
-struct is_arithmetic<unsigned> {
+template <> struct is_arithmetic<unsigned> {
   static constexpr bool value = true;
 };
 
-template <>
-struct is_arithmetic<long long> {
+template <> struct is_arithmetic<long long> {
   static constexpr bool value = true;
 };
 
-template <>
-struct is_arithmetic<unsigned long long> {
+template <> struct is_arithmetic<unsigned long long> {
   static constexpr bool value = true;
 };
 
-template <>
-struct is_arithmetic<float> {
+template <> struct is_arithmetic<float> {
   static constexpr bool value = true;
 };
 
-template <>
-struct is_arithmetic<double> {
+template <> struct is_arithmetic<double> {
   static constexpr bool value = true;
 };
 
-template <>
-struct is_arithmetic<pto::fp16_t> {
+template <> struct is_arithmetic<pto::fp16_t> {
   static constexpr bool value = true;
 };
 
-template <>
-struct is_arithmetic<pto::fp8_e4m3_t> {
+template <> struct is_arithmetic<pto::fp8_e4m3_t> {
   static constexpr bool value = true;
 };
 
-template <>
-struct is_arithmetic<pto::fp4_e2m1_t> {
+template <> struct is_arithmetic<pto::fp4_e2m1_t> {
   static constexpr bool value = true;
 };
 
-template <typename T>
-struct is_floating_point {
+template <typename T> struct is_floating_point {
   static constexpr bool value = false;
 };
 
-template <>
-struct is_floating_point<float> {
+template <> struct is_floating_point<float> {
   static constexpr bool value = true;
 };
 
-template <>
-struct is_floating_point<double> {
+template <> struct is_floating_point<double> {
   static constexpr bool value = true;
 };
 
-template <typename T>
-struct DTypeCode {
+template <typename T> struct DTypeCode {
   static_assert(dependent_false<T>::value,
                 "PTO Linx canonical v0.57: unsupported tile dtype");
 };
 
-template <>
-struct DTypeCode<int> { static constexpr unsigned value = 17u; };
+template <> struct DTypeCode<int> {
+  static constexpr unsigned value = 17u;
+};
 
-template <>
-struct DTypeCode<unsigned> { static constexpr unsigned value = 25u; };
+template <> struct DTypeCode<unsigned> {
+  static constexpr unsigned value = 25u;
+};
 
-template <>
-struct DTypeCode<float> { static constexpr unsigned value = 1u; };
+template <> struct DTypeCode<float> {
+  static constexpr unsigned value = 1u;
+};
 
-template <>
-struct DTypeCode<signed char> { static constexpr unsigned value = 19u; };
+template <> struct DTypeCode<signed char> {
+  static constexpr unsigned value = 19u;
+};
 
-template <>
-struct DTypeCode<unsigned char> { static constexpr unsigned value = 27u; };
+template <> struct DTypeCode<unsigned char> {
+  static constexpr unsigned value = 27u;
+};
 
-template <>
-struct DTypeCode<short> { static constexpr unsigned value = 18u; };
+template <> struct DTypeCode<short> {
+  static constexpr unsigned value = 18u;
+};
 
-template <>
-struct DTypeCode<unsigned short> { static constexpr unsigned value = 26u; };
+template <> struct DTypeCode<unsigned short> {
+  static constexpr unsigned value = 26u;
+};
 
-template <>
-struct DTypeCode<long long> { static constexpr unsigned value = 16u; };
+template <> struct DTypeCode<long long> {
+  static constexpr unsigned value = 16u;
+};
 
-template <>
-struct DTypeCode<unsigned long long> { static constexpr unsigned value = 24u; };
+template <> struct DTypeCode<unsigned long long> {
+  static constexpr unsigned value = 24u;
+};
 
-template <>
-struct DTypeCode<double> { static constexpr unsigned value = 0u; };
+template <> struct DTypeCode<double> {
+  static constexpr unsigned value = 0u;
+};
 
-template <>
-struct DTypeCode<pto::fp16_t> { static constexpr unsigned value = 2u; };
+template <> struct DTypeCode<pto::fp16_t> {
+  static constexpr unsigned value = 2u;
+};
 
-template <>
-struct DTypeCode<pto::fp8_e4m3_t> { static constexpr unsigned value = 3u; };
+template <> struct DTypeCode<pto::fp8_e4m3_t> {
+  static constexpr unsigned value = 3u;
+};
 
-template <>
-struct DTypeCode<pto::fp4_e2m1_t> { static constexpr unsigned value = 11u; };
+template <> struct DTypeCode<pto::fp4_e2m1_t> {
+  static constexpr unsigned value = 11u;
+};
 
 constexpr unsigned kMinTileBytes = 512u;
 constexpr unsigned kMaxTileBytes = 4096u;
@@ -150,8 +146,9 @@ using RawTile = int __attribute__((__vector_size__(4096), __aligned__(64)));
 #endif
 
 constexpr unsigned clampTileBytes(unsigned bytes) {
-  return bytes < kMinTileBytes ? kMinTileBytes
-                               : (bytes > kMaxTileBytes ? kMaxTileBytes : bytes);
+  return bytes < kMinTileBytes
+             ? kMinTileBytes
+             : (bytes > kMaxTileBytes ? kMaxTileBytes : bytes);
 }
 
 constexpr unsigned nextPow2(unsigned value) {
@@ -217,8 +214,7 @@ constexpr unsigned dtypeElemCountForBytes(uint64_t bytes, unsigned dtype) {
   return static_cast<unsigned>(total_bits / bits);
 }
 
-template <typename Scalar>
-inline long long encodeScalar(Scalar value) {
+template <typename Scalar> inline long long encodeScalar(Scalar value) {
   static_assert(is_arithmetic<Scalar>::value,
                 "PTO Linx canonical v0.57: scalar operand must be arithmetic");
   if constexpr (is_same<Scalar, pto::fp16_t>::value) {
@@ -254,17 +250,17 @@ inline uint64_t sizeBytesFromCode(unsigned size_code) {
   return (size_code < 60u) ? (1ull << (size_code + 4u)) : 0ull;
 }
 
-template <typename T>
-inline uint32_t bitCastToU32(T value) {
-  static_assert(sizeof(T) == sizeof(uint32_t), "bitCastToU32 requires 32-bit type");
+template <typename T> inline uint32_t bitCastToU32(T value) {
+  static_assert(sizeof(T) == sizeof(uint32_t),
+                "bitCastToU32 requires 32-bit type");
   uint32_t out = 0;
   memcpy(&out, &value, sizeof(uint32_t));
   return out;
 }
 
-template <typename T>
-inline T bitCastFromU32(uint32_t bits) {
-  static_assert(sizeof(T) == sizeof(uint32_t), "bitCastFromU32 requires 32-bit type");
+template <typename T> inline T bitCastFromU32(uint32_t bits) {
+  static_assert(sizeof(T) == sizeof(uint32_t),
+                "bitCastFromU32 requires 32-bit type");
   T out{};
   memcpy(&out, &bits, sizeof(uint32_t));
   return out;
@@ -319,7 +315,8 @@ inline float dequantWordToF32(uint32_t word, unsigned dtype) {
 }
 
 template <unsigned TileOpcode, unsigned DType>
-inline RawTile teplUnaryHost(const RawTile &src, unsigned elems) {
+inline RawTile teplUnaryHost(const RawTile &src, unsigned elems, unsigned rows,
+                             unsigned cols) {
   RawTile out{};
   for (unsigned i = 0; i < kTileWords; ++i)
     out.words[i] = 0u;
@@ -361,11 +358,10 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems) {
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float f = dequantWordToF32(src.words[i], DType);
       const float root = f >= 0.0f ? sqrtf(f) : NAN;
-      out.words[i] =
-          quantizeF32ToWord((TileOpcode & 0x3ffu) == 0x011u
-                                ? (root == 0.0f ? 0.0f : 1.0f / root)
-                                : root,
-                            DType);
+      out.words[i] = quantizeF32ToWord((TileOpcode & 0x3ffu) == 0x011u
+                                           ? (root == 0.0f ? 0.0f : 1.0f / root)
+                                           : root,
+                                       DType);
     }
     break;
   case 0x02du: // TABS
@@ -378,18 +374,15 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems) {
     for (unsigned i = 0; i < elems && i < kTileWords; ++i)
       out.words[i] = ~src.words[i];
     break;
-  case 0x012u: // TROWMAX
-  case 0x013u: // TROWMIN
+  case 0x012u:   // TROWMAX
+  case 0x013u:   // TROWMIN
   case 0x014u: { // TROWSUM
-    constexpr unsigned cols = 32u;
-    const unsigned rows = elems / cols;
     for (unsigned r = 0; r < rows; ++r) {
       float value = dequantWordToF32(src.words[r * cols], DType);
       if ((TileOpcode & 0x3ffu) == 0x014u)
         value = 0.0f;
       for (unsigned c = 0; c < cols; ++c) {
-        const float cur =
-            dequantWordToF32(src.words[r * cols + c], DType);
+        const float cur = dequantWordToF32(src.words[r * cols + c], DType);
         if ((TileOpcode & 0x3ffu) == 0x012u)
           value = value > cur ? value : cur;
         else if ((TileOpcode & 0x3ffu) == 0x013u)
@@ -401,18 +394,15 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems) {
     }
     break;
   }
-  case 0x015u: // TCOLMAX
-  case 0x016u: // TCOLMIN
+  case 0x015u:   // TCOLMAX
+  case 0x016u:   // TCOLMIN
   case 0x017u: { // TCOLSUM
-    constexpr unsigned cols = 32u;
-    const unsigned rows = elems / cols;
     for (unsigned c = 0; c < cols; ++c) {
       float value = dequantWordToF32(src.words[c], DType);
       if ((TileOpcode & 0x3ffu) == 0x017u)
         value = 0.0f;
       for (unsigned r = 0; r < rows; ++r) {
-        const float cur =
-            dequantWordToF32(src.words[r * cols + c], DType);
+        const float cur = dequantWordToF32(src.words[r * cols + c], DType);
         if ((TileOpcode & 0x3ffu) == 0x015u)
           value = value > cur ? value : cur;
         else if ((TileOpcode & 0x3ffu) == 0x016u)
@@ -425,27 +415,21 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems) {
     break;
   }
   case 0x01du: { // TTRANSPOSE
-    constexpr unsigned cols = 32u;
-    const unsigned rows = elems / cols;
     for (unsigned r = 0; r < rows; ++r)
       for (unsigned c = 0; c < cols; ++c)
         out.words[c * rows + r] = src.words[r * cols + c];
     break;
   }
-  case 0x01eu: // TCOLEXPAND
+  case 0x01eu:   // TCOLEXPAND
   case 0x01fu: { // TROWEXPAND
-    constexpr unsigned cols = 32u;
-    const unsigned rows = elems / cols;
     for (unsigned r = 0; r < rows; ++r)
       for (unsigned c = 0; c < cols; ++c)
-        out.words[r * cols + c] =
-            (TileOpcode & 0x3ffu) == 0x01eu ? src.words[c]
-                                            : src.words[r * cols];
+        out.words[r * cols + c] = (TileOpcode & 0x3ffu) == 0x01eu
+                                      ? src.words[c]
+                                      : src.words[r * cols];
     break;
   }
   case 0x0c0u: { // TSORT
-    constexpr unsigned cols = 32u;
-    const unsigned rows = elems / cols;
     for (unsigned i = 0; i < elems && i < kTileWords; ++i)
       out.words[i] = src.words[i];
     for (unsigned r = 0; r < rows; ++r)
@@ -464,7 +448,7 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems) {
   }
   case 0x0c2u: // THISTOGRAM
     for (unsigned i = 0; i < elems && i < kTileWords; ++i)
-      out.words[src.words[i] & 31u] += 1u;
+      out.words[src.words[i] % (cols == 0u ? 1u : cols)] += 1u;
     break;
   default:
     // Unsupported op in host backend: keep destination zeroed.
@@ -474,7 +458,8 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems) {
 }
 
 template <unsigned TileOpcode, unsigned DType>
-inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs, unsigned elems) {
+inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs,
+                              unsigned elems) {
   RawTile out{};
   for (unsigned i = 0; i < kTileWords; ++i)
     out.words[i] = 0u;
@@ -504,7 +489,7 @@ inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs, unsigned e
       out.words[i] = quantizeF32ToWord(a - b, DType);
     }
     break;
-  case 0x002u: // TMUL
+  case 0x002u:   // TMUL
   case 0x022u: { // TMULS
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float a = dequantWordToF32(lhs.words[i], DType);
@@ -513,7 +498,7 @@ inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs, unsigned e
     }
     break;
   }
-  case 0x003u: // TDIV
+  case 0x003u:   // TDIV
   case 0x023u: { // TDIVS
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float a = dequantWordToF32(lhs.words[i], DType);
@@ -523,7 +508,7 @@ inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs, unsigned e
     }
     break;
   }
-  case 0x004u: // TMAX
+  case 0x004u:   // TMAX
   case 0x024u: { // TMAXS
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float a = dequantWordToF32(lhs.words[i], DType);
@@ -532,7 +517,7 @@ inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs, unsigned e
     }
     break;
   }
-  case 0x005u: // TMIN
+  case 0x005u:   // TMIN
   case 0x025u: { // TMINS
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float a = dequantWordToF32(lhs.words[i], DType);
@@ -574,9 +559,10 @@ inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs, unsigned e
 
 #endif
 
-template <unsigned SizeCode, unsigned DType, long long Layout, long long LB0,
-          long long LB1, long long StrideBytes>
-inline RawTile tileTLoad(const void *base) {
+template <unsigned SizeCode, unsigned DType, long long Layout>
+inline RawTile tileTLoad(const void *base, unsigned valid_col,
+                         unsigned valid_row, unsigned physical_col,
+                         uint64_t stride_bytes) {
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
                 "PTO Linx canonical v0.57: size_code must be in [5,8]");
 #if defined(PTO_HOST_SIM)
@@ -593,21 +579,19 @@ inline RawTile tileTLoad(const void *base) {
     return out;
 
   const unsigned max_elems = dtypeElemCountForBytes(bytes64, DType);
-  const uint64_t cols = (LB0 > 0) ? static_cast<uint64_t>(LB0)
-                                  : static_cast<uint64_t>(max_elems);
-  const uint64_t rows = (LB1 > 0) ? static_cast<uint64_t>(LB1) : 1u;
-  if (rows == 0u || cols == 0u)
+  const uint64_t cols = valid_col;
+  const uint64_t rows = valid_row;
+  const uint64_t physical_cols = physical_col;
+  if (rows == 0u || cols == 0u || physical_cols < cols)
     return out;
-  if (rows > (UINT64_MAX / cols))
+  if (rows > (UINT64_MAX / physical_cols))
     return out;
-  const uint64_t active = rows * cols;
-  if (active > max_elems)
+  if (rows * physical_cols > max_elems)
     return out;
 
   const uint64_t row_span_bits = cols * elem_bits;
   const uint64_t row_span_bytes = (row_span_bits + 7u) / 8u;
-  const uint64_t stride_bytes =
-      (StrideBytes > 0) ? static_cast<uint64_t>(StrideBytes) : row_span_bytes;
+  stride_bytes = stride_bytes > 0 ? stride_bytes : row_span_bytes;
   if (stride_bytes < row_span_bytes ||
       (elem_bytes != 0u && (stride_bytes % elem_bytes) != 0u)) {
     return out;
@@ -617,7 +601,7 @@ inline RawTile tileTLoad(const void *base) {
   for (uint64_t r = 0; r < rows; ++r) {
     const uint64_t row_base = r * stride_bytes;
     for (uint64_t c = 0; c < cols; ++c) {
-      const uint64_t idx64 = r * cols + c;
+      const uint64_t idx64 = r * physical_cols + c;
       if (idx64 >= kTileWords)
         return out;
       const unsigned idx = static_cast<unsigned>(idx64);
@@ -649,14 +633,15 @@ inline RawTile tileTLoad(const void *base) {
   }
   return out;
 #else
-  return __builtin_linx_tile_tload(base, SizeCode, DType, Layout, LB0, LB1,
-                                   StrideBytes);
+  return __builtin_linx_tile_tload(base, SizeCode, DType, Layout, valid_col,
+                                   valid_row, physical_col, stride_bytes);
 #endif
 }
 
-template <unsigned SizeCode, unsigned DType, long long Layout, long long LB0,
-          long long LB1, long long StrideBytes>
-inline void tileTStore(void *base, RawTile tile) {
+template <unsigned SizeCode, unsigned DType, long long Layout>
+inline void tileTStore(void *base, RawTile tile, unsigned valid_col,
+                       unsigned valid_row, unsigned physical_col,
+                       uint64_t stride_bytes) {
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
                 "PTO Linx canonical v0.57: size_code must be in [5,8]");
 #if defined(PTO_HOST_SIM)
@@ -669,21 +654,19 @@ inline void tileTStore(void *base, RawTile tile) {
     return;
 
   const unsigned max_elems = dtypeElemCountForBytes(bytes64, DType);
-  const uint64_t cols = (LB0 > 0) ? static_cast<uint64_t>(LB0)
-                                  : static_cast<uint64_t>(max_elems);
-  const uint64_t rows = (LB1 > 0) ? static_cast<uint64_t>(LB1) : 1u;
-  if (rows == 0u || cols == 0u)
+  const uint64_t cols = valid_col;
+  const uint64_t rows = valid_row;
+  const uint64_t physical_cols = physical_col;
+  if (rows == 0u || cols == 0u || physical_cols < cols)
     return;
-  if (rows > (UINT64_MAX / cols))
+  if (rows > (UINT64_MAX / physical_cols))
     return;
-  const uint64_t active = rows * cols;
-  if (active > max_elems)
+  if (rows * physical_cols > max_elems)
     return;
 
   const uint64_t row_span_bits = cols * elem_bits;
   const uint64_t row_span_bytes = (row_span_bits + 7u) / 8u;
-  const uint64_t stride_bytes =
-      (StrideBytes > 0) ? static_cast<uint64_t>(StrideBytes) : row_span_bytes;
+  stride_bytes = stride_bytes > 0 ? stride_bytes : row_span_bytes;
   if (stride_bytes < row_span_bytes ||
       (elem_bytes != 0u && (stride_bytes % elem_bytes) != 0u)) {
     return;
@@ -693,7 +676,7 @@ inline void tileTStore(void *base, RawTile tile) {
   for (uint64_t r = 0; r < rows; ++r) {
     const uint64_t row_base = r * stride_bytes;
     for (uint64_t c = 0; c < cols; ++c) {
-      const uint64_t idx64 = r * cols + c;
+      const uint64_t idx64 = r * physical_cols + c;
       if (idx64 >= kTileWords)
         return;
       const uint32_t value = tile.words[static_cast<unsigned>(idx64)];
@@ -723,8 +706,8 @@ inline void tileTStore(void *base, RawTile tile) {
     }
   }
 #else
-  __builtin_linx_tile_tstore(base, tile, SizeCode, DType, Layout, LB0, LB1,
-                             StrideBytes);
+  __builtin_linx_tile_tstore(base, tile, SizeCode, DType, Layout, valid_col,
+                             valid_row, physical_col, stride_bytes);
 #endif
 }
 
@@ -769,9 +752,8 @@ inline RawTile cubeMamulbAcc(RawTile acc, RawTile lhs, RawTile rhs) {
   for (unsigned i = 0; i < M; ++i) {
     for (unsigned j = 0; j < N; ++j) {
       const unsigned out_idx = i * N + j;
-      int64_t sum = (out_idx < kTileWords)
-                        ? static_cast<int32_t>(out.words[out_idx])
-                        : 0;
+      int64_t sum =
+          (out_idx < kTileWords) ? static_cast<int32_t>(out.words[out_idx]) : 0;
       for (unsigned k = 0; k < K; ++k) {
         const unsigned a_idx = i * K + k;
         const unsigned b_idx = k * N + j;
@@ -792,7 +774,8 @@ inline RawTile cubeMamulbAcc(RawTile acc, RawTile lhs, RawTile rhs) {
 }
 
 template <unsigned TileOpcode, unsigned SizeCode, unsigned DType>
-inline RawTile teplUnary(RawTile src) {
+inline RawTile teplUnary(RawTile src, unsigned valid_col, unsigned valid_row,
+                         unsigned physical_col) {
   static_assert(TileOpcode <= 0x3ffu,
                 "PTO Linx canonical v0.57: TEPL tile opcode must fit u10");
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
@@ -800,18 +783,39 @@ inline RawTile teplUnary(RawTile src) {
 #if defined(PTO_HOST_SIM)
   const uint64_t bytes64 = sizeBytesFromCode(SizeCode);
   const unsigned elem_bytes = dtypeElemBytesForStorage(DType);
-  const unsigned elems =
+  const unsigned carrier_elems =
       (bytes64 == 0 || bytes64 > kMaxTileBytes || elem_bytes == 0)
           ? 0u
           : dtypeElemCountForBytes(bytes64, DType);
-  return teplUnaryHost<TileOpcode, DType>(src, elems);
+  if (valid_col == 0u || valid_row == 0u || physical_col < valid_col ||
+      physical_col == 0u || valid_row > carrier_elems / physical_col)
+    return RawTile{};
+  RawTile packed{};
+  for (unsigned r = 0; r < valid_row; ++r)
+    for (unsigned c = 0; c < valid_col; ++c)
+      packed.words[r * valid_col + c] = src.words[r * physical_col + c];
+  RawTile packed_out = teplUnaryHost<TileOpcode, DType>(
+      packed, valid_row * valid_col, valid_row, valid_col);
+  RawTile out{};
+  if constexpr ((TileOpcode & 0x3ffu) == 0x01du) {
+    for (unsigned r = 0; r < valid_col; ++r)
+      for (unsigned c = 0; c < valid_row; ++c)
+        out.words[r * physical_col + c] = packed_out.words[r * valid_row + c];
+  } else {
+    for (unsigned r = 0; r < valid_row; ++r)
+      for (unsigned c = 0; c < valid_col; ++c)
+        out.words[r * physical_col + c] = packed_out.words[r * valid_col + c];
+  }
+  return out;
 #else
-  return __builtin_linx_tepl_unary(src, TileOpcode, SizeCode, DType);
+  return __builtin_linx_tepl_unary(src, TileOpcode, SizeCode, DType, valid_col,
+                                   valid_row, physical_col);
 #endif
 }
 
 template <unsigned TileOpcode, unsigned SizeCode, unsigned DType>
-inline RawTile teplBinary(RawTile lhs, RawTile rhs) {
+inline RawTile teplBinary(RawTile lhs, RawTile rhs, unsigned valid_col,
+                          unsigned valid_row, unsigned physical_col) {
   static_assert(TileOpcode <= 0x3ffu,
                 "PTO Linx canonical v0.57: TEPL tile opcode must fit u10");
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
@@ -819,25 +823,43 @@ inline RawTile teplBinary(RawTile lhs, RawTile rhs) {
 #if defined(PTO_HOST_SIM)
   const uint64_t bytes64 = sizeBytesFromCode(SizeCode);
   const unsigned elem_bytes = dtypeElemBytesForStorage(DType);
-  const unsigned elems =
+  const unsigned carrier_elems =
       (bytes64 == 0 || bytes64 > kMaxTileBytes || elem_bytes == 0)
           ? 0u
           : dtypeElemCountForBytes(bytes64, DType);
-  return teplBinaryHost<TileOpcode, DType>(lhs, rhs, elems);
+  if (valid_col == 0u || valid_row == 0u || physical_col < valid_col ||
+      physical_col == 0u || valid_row > carrier_elems / physical_col)
+    return RawTile{};
+  RawTile packed_lhs{};
+  RawTile packed_rhs{};
+  for (unsigned r = 0; r < valid_row; ++r)
+    for (unsigned c = 0; c < valid_col; ++c) {
+      packed_lhs.words[r * valid_col + c] = lhs.words[r * physical_col + c];
+      packed_rhs.words[r * valid_col + c] = rhs.words[r * physical_col + c];
+    }
+  RawTile packed_out = teplBinaryHost<TileOpcode, DType>(packed_lhs, packed_rhs,
+                                                         valid_row * valid_col);
+  RawTile out{};
+  for (unsigned r = 0; r < valid_row; ++r)
+    for (unsigned c = 0; c < valid_col; ++c)
+      out.words[r * physical_col + c] = packed_out.words[r * valid_col + c];
+  return out;
 #else
-  return __builtin_linx_tepl_binary(lhs, rhs, TileOpcode, SizeCode, DType);
+  return __builtin_linx_tepl_binary(lhs, rhs, TileOpcode, SizeCode, DType,
+                                    valid_col, valid_row, physical_col);
 #endif
 }
 
 template <unsigned TileOpcode, unsigned SizeCode, unsigned DType, unsigned Mode,
           typename Scalar>
-inline RawTile teplBinaryScalar(RawTile lhs, Scalar scalar) {
+inline RawTile teplBinaryScalar(RawTile lhs, Scalar scalar, unsigned valid_col,
+                                unsigned valid_row, unsigned physical_col) {
   static_assert(TileOpcode <= 0x3ffu,
                 "PTO Linx canonical v0.57: TEPL tile opcode must fit u10");
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
                 "PTO Linx canonical v0.57: size_code must be in [5,8]");
-  static_assert(Mode == 1u,
-                "PTO Linx canonical v0.57: tepl.binary.scalar requires operand mode=VS(1)");
+  static_assert(Mode == 1u, "PTO Linx canonical v0.57: tepl.binary.scalar "
+                            "requires operand mode=VS(1)");
 #if defined(PTO_HOST_SIM)
   RawTile rhs{};
   const uint64_t bytes64 = sizeBytesFromCode(SizeCode);
@@ -850,22 +872,26 @@ inline RawTile teplBinaryScalar(RawTile lhs, Scalar scalar) {
   const uint32_t scalar_word = scalarToWordDType(bits, DType);
   for (unsigned i = 0; i < elems && i < kTileWords; ++i)
     rhs.words[i] = scalar_word;
-  return teplBinaryHost<TileOpcode, DType>(lhs, rhs, elems);
+  return teplBinary<TileOpcode, SizeCode, DType>(lhs, rhs, valid_col, valid_row,
+                                                 physical_col);
 #else
-  return __builtin_linx_tepl_binary_scalar(lhs, encodeScalar(scalar), TileOpcode,
-                                           SizeCode, DType, Mode);
+  return __builtin_linx_tepl_binary_scalar(lhs, encodeScalar(scalar),
+                                           TileOpcode, SizeCode, DType, Mode,
+                                           valid_col, valid_row, physical_col);
 #endif
 }
 
 template <unsigned TileOpcode, unsigned SizeCode, unsigned DType, unsigned Mode,
           typename Scalar>
-inline RawTile teplSplat(Scalar scalar) {
+inline RawTile teplSplat(Scalar scalar, unsigned valid_col, unsigned valid_row,
+                         unsigned physical_col) {
   static_assert(TileOpcode <= 0x3ffu,
                 "PTO Linx canonical v0.57: TEPL tile opcode must fit u10");
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
                 "PTO Linx canonical v0.57: size_code must be in [5,8]");
-  static_assert(Mode == 2u,
-                "PTO Linx canonical v0.57: tepl.splat requires operand mode=SV(2)");
+  static_assert(
+      Mode == 2u,
+      "PTO Linx canonical v0.57: tepl.splat requires operand mode=SV(2)");
 #if defined(PTO_HOST_SIM)
   RawTile out{};
   for (unsigned i = 0; i < kTileWords; ++i)
@@ -883,21 +909,27 @@ inline RawTile teplSplat(Scalar scalar) {
 
   const long long bits = encodeScalar(scalar);
   const uint32_t scalar_word = scalarToWordDType(bits, DType);
-  for (unsigned i = 0; i < elems && i < kTileWords; ++i)
-    out.words[i] = scalar_word;
+  if (valid_col == 0u || valid_row == 0u || physical_col < valid_col ||
+      physical_col == 0u || valid_row > elems / physical_col)
+    return RawTile{};
+  for (unsigned r = 0; r < valid_row; ++r)
+    for (unsigned c = 0; c < valid_col; ++c)
+      out.words[r * physical_col + c] = scalar_word;
   return out;
 #else
   return __builtin_linx_tepl_splat(encodeScalar(scalar), TileOpcode, SizeCode,
-                                   DType, Mode);
+                                   DType, Mode, valid_col, valid_row,
+                                   physical_col);
 #endif
 }
 
-template <unsigned SizeCode, unsigned DType, long long Layout, unsigned HasLayout,
-          unsigned Mode>
+template <unsigned SizeCode, unsigned DType, long long Layout,
+          unsigned HasLayout, unsigned Mode>
 inline RawTile tileTMov(RawTile src) {
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
                 "PTO Linx canonical v0.57: size_code must be in [5,8]");
-  static_assert(HasLayout <= 1u, "PTO Linx canonical v0.57: has_layout must be bool");
+  static_assert(HasLayout <= 1u,
+                "PTO Linx canonical v0.57: has_layout must be bool");
   static_assert(Mode <= 1u,
                 "PTO Linx canonical v0.57: tmov mode must be 0(V2V) or 1(A2V)");
 #if defined(PTO_HOST_SIM)
@@ -907,7 +939,8 @@ inline RawTile tileTMov(RawTile src) {
   (void)Mode;
   return src;
 #else
-  return __builtin_linx_tile_tmov(src, Mode, SizeCode, DType, Layout, HasLayout);
+  return __builtin_linx_tile_tmov(src, Mode, SizeCode, DType, Layout,
+                                  HasLayout);
 #endif
 }
 

@@ -87,7 +87,7 @@ def main() -> int:
         return 1
     print(
         f"OK: mapped {mapped_sources} upstream kernel sources to "
-        f"{len(mapped_apis)} loop-free PTO APIs at {commit}"
+        f"{len(mapped_apis)} scalar-data-loop-free PTO APIs at {commit}"
     )
     return 0
 
