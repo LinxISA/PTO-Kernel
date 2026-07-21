@@ -427,7 +427,8 @@ inline void TCVT(DstTile &dst, const SrcTile &src) {
   dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
   dst.raw() =
       linx::detail::teplUnary<tepl::TCVT, detail::tileSizeCode<DstTile>(),
-                              detail::tileDTypeCode<DstTile>()>(
+                              detail::tileDTypeCode<DstTile>(),
+                              detail::tileDTypeCode<SrcTile>()>(
           src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 

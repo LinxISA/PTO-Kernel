@@ -296,6 +296,20 @@ inline uint32_t quantizeF32ToWord(float x, unsigned dtype) {
     return pto::lowp_word_from_fp8(pto::float_to_fp8_e4m3(x));
   case 11u:
     return pto::lowp_word_from_fp4(pto::float_to_fp4_e2m1(x));
+  case 17u:
+    return static_cast<uint32_t>(static_cast<int32_t>(x));
+  case 25u:
+    return static_cast<uint32_t>(x < 0.0f ? 0.0f : x);
+  case 18u:
+    return static_cast<uint16_t>(static_cast<int16_t>(x));
+  case 26u:
+    return static_cast<uint16_t>(x < 0.0f ? 0.0f : x);
+  case 19u:
+    return static_cast<uint8_t>(static_cast<int8_t>(
+        x < -128.0f ? -128.0f : (x > 127.0f ? 127.0f : x)));
+  case 27u:
+    return static_cast<uint8_t>(
+        x < 0.0f ? 0.0f : (x > 255.0f ? 255.0f : x));
   default:
     return bitCastToU32<float>(x);
   }
@@ -309,12 +323,24 @@ inline float dequantWordToF32(uint32_t word, unsigned dtype) {
     return pto::fp8_e4m3_to_float(pto::fp8_from_lowp_word(word));
   case 11u:
     return pto::fp4_e2m1_to_float(pto::fp4_from_lowp_word(word));
+  case 17u:
+    return static_cast<float>(static_cast<int32_t>(word));
+  case 25u:
+    return static_cast<float>(word);
+  case 18u:
+    return static_cast<float>(static_cast<int16_t>(word));
+  case 26u:
+    return static_cast<float>(static_cast<uint16_t>(word));
+  case 19u:
+    return static_cast<float>(static_cast<int8_t>(word));
+  case 27u:
+    return static_cast<float>(static_cast<uint8_t>(word));
   default:
     return bitCastFromU32<float>(word);
   }
 }
 
-template <unsigned TileOpcode, unsigned DType>
+template <unsigned TileOpcode, unsigned DType, unsigned SrcDType = DType>
 inline RawTile teplUnaryHost(const RawTile &src, unsigned elems, unsigned rows,
                              unsigned cols) {
   RawTile out{};
@@ -324,7 +350,7 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems, unsigned rows,
   switch (TileOpcode & 0x3ffu) {
   case 0x00du: // TCVT
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
-      const float f = dequantWordToF32(src.words[i], DType);
+      const float f = dequantWordToF32(src.words[i], SrcDType);
       out.words[i] = quantizeF32ToWord(f, DType);
     }
     break;
@@ -773,7 +799,8 @@ inline RawTile cubeMamulbAcc(RawTile acc, RawTile lhs, RawTile rhs) {
 #endif
 }
 
-template <unsigned TileOpcode, unsigned SizeCode, unsigned DType>
+template <unsigned TileOpcode, unsigned SizeCode, unsigned DType,
+          unsigned SrcDType = DType>
 inline RawTile teplUnary(RawTile src, unsigned valid_col, unsigned valid_row,
                          unsigned physical_col) {
   static_assert(TileOpcode <= 0x3ffu,
@@ -794,7 +821,7 @@ inline RawTile teplUnary(RawTile src, unsigned valid_col, unsigned valid_row,
   for (unsigned r = 0; r < valid_row; ++r)
     for (unsigned c = 0; c < valid_col; ++c)
       packed.words[r * valid_col + c] = src.words[r * physical_col + c];
-  RawTile packed_out = teplUnaryHost<TileOpcode, DType>(
+  RawTile packed_out = teplUnaryHost<TileOpcode, DType, SrcDType>(
       packed, valid_row * valid_col, valid_row, valid_col);
   RawTile out{};
   if constexpr ((TileOpcode & 0x3ffu) == 0x01du) {
