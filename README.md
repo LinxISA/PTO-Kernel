@@ -37,6 +37,32 @@ cmake --build build-linx --target pto_linx_contracts
 - `/Users/zhoubot/linx-isa/docs/bringup/`
 - `/Users/zhoubot/linx-isa/workloads/pto_kernels/docs/`
 - Pages dashboard: `https://linxisa.github.io/pto-kernel/` (published from `docs/`)
+- DeepSeek TileKernels provenance and source-to-PTO mapping:
+  `docs/upstream/deepseek-tilekernels.json`
+
+## DeepSeek TileKernels lane
+
+The `kernels/upstream/deepseek/` lane ports all 37 kernel source files from
+`deepseek-ai/TileKernels` main at the exact commit recorded in the provenance
+manifest. The port is freestanding and has no Python, PyTorch, CUDA, or
+TileLang runtime dependency. Kernel data paths are loop-free C++ compositions
+of named PTO ISA v0.57 intrinsics; scalar loops are confined to the QEMU test
+harness and oracle. The executable closure profile is one 32x32 row-major tile,
+with larger tensors tiled by the caller.
+
+Run the host contracts locally:
+
+```bash
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+From the LinxISA superproject, compile and execute the standard-input suite:
+
+```bash
+python3 avs/qemu/run_tests.py --suite deepseek_tilekernels --verbose
+```
 
 ## Tidy-Up Status
 - `done`: split kernel sources by operation family under `kernels/attention`, `kernels/matmul`, `kernels/normalization`, `kernels/elementwise`, `kernels/layout`, `kernels/indexing`, `kernels/routing`, `kernels/decode`, and `kernels/memory`

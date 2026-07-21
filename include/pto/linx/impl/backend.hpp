@@ -331,12 +331,11 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems) {
       out.words[i] = quantizeF32ToWord(f, DType);
     }
     break;
-  case 0x012u: // TROWMAX (fallback: identity under host backend)
-  case 0x014u: // TROWSUM (fallback: identity under host backend)
-  case 0x01eu: // TCOLEXPAND (fallback: identity under host backend)
-  case 0x01fu: // TROWEXPAND (fallback: identity under host backend)
-    for (unsigned i = 0; i < elems && i < kTileWords; ++i)
-      out.words[i] = src.words[i];
+  case 0x00bu: // TRELU
+    for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
+      const float f = dequantWordToF32(src.words[i], DType);
+      out.words[i] = quantizeF32ToWord(f > 0.0f ? f : 0.0f, DType);
+    }
     break;
   case 0x00eu: // TEXP
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
@@ -350,6 +349,122 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems) {
       float inv = (f == 0.0f) ? 0.0f : (1.0f / f);
       out.words[i] = quantizeF32ToWord(inv, DType);
     }
+    break;
+  case 0x00fu: // TLOG
+    for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
+      const float f = dequantWordToF32(src.words[i], DType);
+      out.words[i] = quantizeF32ToWord(f > 0.0f ? logf(f) : -INFINITY, DType);
+    }
+    break;
+  case 0x010u: // TSQRT
+  case 0x011u: // TRSQRT
+    for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
+      const float f = dequantWordToF32(src.words[i], DType);
+      const float root = f >= 0.0f ? sqrtf(f) : NAN;
+      out.words[i] =
+          quantizeF32ToWord((TileOpcode & 0x3ffu) == 0x011u
+                                ? (root == 0.0f ? 0.0f : 1.0f / root)
+                                : root,
+                            DType);
+    }
+    break;
+  case 0x02du: // TABS
+    for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
+      const float f = dequantWordToF32(src.words[i], DType);
+      out.words[i] = quantizeF32ToWord(fabsf(f), DType);
+    }
+    break;
+  case 0x02eu: // TNOT
+    for (unsigned i = 0; i < elems && i < kTileWords; ++i)
+      out.words[i] = ~src.words[i];
+    break;
+  case 0x012u: // TROWMAX
+  case 0x013u: // TROWMIN
+  case 0x014u: { // TROWSUM
+    constexpr unsigned cols = 32u;
+    const unsigned rows = elems / cols;
+    for (unsigned r = 0; r < rows; ++r) {
+      float value = dequantWordToF32(src.words[r * cols], DType);
+      if ((TileOpcode & 0x3ffu) == 0x014u)
+        value = 0.0f;
+      for (unsigned c = 0; c < cols; ++c) {
+        const float cur =
+            dequantWordToF32(src.words[r * cols + c], DType);
+        if ((TileOpcode & 0x3ffu) == 0x012u)
+          value = value > cur ? value : cur;
+        else if ((TileOpcode & 0x3ffu) == 0x013u)
+          value = value < cur ? value : cur;
+        else
+          value += cur;
+      }
+      out.words[r * cols] = quantizeF32ToWord(value, DType);
+    }
+    break;
+  }
+  case 0x015u: // TCOLMAX
+  case 0x016u: // TCOLMIN
+  case 0x017u: { // TCOLSUM
+    constexpr unsigned cols = 32u;
+    const unsigned rows = elems / cols;
+    for (unsigned c = 0; c < cols; ++c) {
+      float value = dequantWordToF32(src.words[c], DType);
+      if ((TileOpcode & 0x3ffu) == 0x017u)
+        value = 0.0f;
+      for (unsigned r = 0; r < rows; ++r) {
+        const float cur =
+            dequantWordToF32(src.words[r * cols + c], DType);
+        if ((TileOpcode & 0x3ffu) == 0x015u)
+          value = value > cur ? value : cur;
+        else if ((TileOpcode & 0x3ffu) == 0x016u)
+          value = value < cur ? value : cur;
+        else
+          value += cur;
+      }
+      out.words[c] = quantizeF32ToWord(value, DType);
+    }
+    break;
+  }
+  case 0x01du: { // TTRANSPOSE
+    constexpr unsigned cols = 32u;
+    const unsigned rows = elems / cols;
+    for (unsigned r = 0; r < rows; ++r)
+      for (unsigned c = 0; c < cols; ++c)
+        out.words[c * rows + r] = src.words[r * cols + c];
+    break;
+  }
+  case 0x01eu: // TCOLEXPAND
+  case 0x01fu: { // TROWEXPAND
+    constexpr unsigned cols = 32u;
+    const unsigned rows = elems / cols;
+    for (unsigned r = 0; r < rows; ++r)
+      for (unsigned c = 0; c < cols; ++c)
+        out.words[r * cols + c] =
+            (TileOpcode & 0x3ffu) == 0x01eu ? src.words[c]
+                                            : src.words[r * cols];
+    break;
+  }
+  case 0x0c0u: { // TSORT
+    constexpr unsigned cols = 32u;
+    const unsigned rows = elems / cols;
+    for (unsigned i = 0; i < elems && i < kTileWords; ++i)
+      out.words[i] = src.words[i];
+    for (unsigned r = 0; r < rows; ++r)
+      for (unsigned i = 1; i < cols; ++i) {
+        const uint32_t key = out.words[r * cols + i];
+        const float key_f = dequantWordToF32(key, DType);
+        unsigned j = i;
+        while (j > 0 &&
+               dequantWordToF32(out.words[r * cols + j - 1], DType) > key_f) {
+          out.words[r * cols + j] = out.words[r * cols + j - 1];
+          --j;
+        }
+        out.words[r * cols + j] = key;
+      }
+    break;
+  }
+  case 0x0c2u: // THISTOGRAM
+    for (unsigned i = 0; i < elems && i < kTileWords; ++i)
+      out.words[src.words[i] & 31u] += 1u;
     break;
   default:
     // Unsupported op in host backend: keep destination zeroed.
@@ -365,6 +480,14 @@ inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs, unsigned e
     out.words[i] = 0u;
 
   switch (TileOpcode & 0x3ffu) {
+  case 0x01au: // TGATHER
+    for (unsigned i = 0; i < elems && i < kTileWords; ++i)
+      out.words[i] = lhs.words[rhs.words[i] % elems];
+    break;
+  case 0x01bu: // TSCATTER
+    for (unsigned i = 0; i < elems && i < kTileWords; ++i)
+      out.words[rhs.words[i] % elems] = lhs.words[i];
+    break;
   case 0x000u: // TADD
   case 0x020u: // TADDS
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {

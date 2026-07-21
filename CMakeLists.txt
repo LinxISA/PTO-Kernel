@@ -30,6 +30,10 @@ if(PTO_ENABLE_TESTS)
     target_link_libraries(pto_block_vector_smoke PRIVATE pto_headers)
     target_compile_definitions(pto_block_vector_smoke PRIVATE PTO_HOST_SIM=1)
     add_test(NAME pto_block_vector_smoke COMMAND pto_block_vector_smoke)
+    add_test(
+      NAME pto_deepseek_tilekernels_manifest
+      COMMAND ${PTO_PYTHON3}
+              ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_deepseek_tilekernels_manifest.py)
 
     if(PTO_BENCHMARK_WORKBOOK)
       add_test(
@@ -62,6 +66,7 @@ if(PTO_ENABLE_LINX_CROSS)
   file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/kernels/catalog.txt" PTO_KERNEL_PATHS)
 
   set(PTO_ASM_OUTPUTS)
+  set(PTO_DEEPSEEK_ASM_OUTPUTS)
   foreach(rel_path IN LISTS PTO_KERNEL_PATHS)
     if(rel_path STREQUAL "" OR rel_path MATCHES "^#")
       continue()
@@ -89,9 +94,19 @@ if(PTO_ENABLE_LINX_CROSS)
       DEPENDS "${src_path}"
       VERBATIM)
     list(APPEND PTO_ASM_OUTPUTS "${out_asm}")
+    if(rel_path MATCHES "^upstream/deepseek/")
+      list(APPEND PTO_DEEPSEEK_ASM_OUTPUTS "${out_asm}")
+    endif()
   endforeach()
 
   add_custom_target(pto_linx_asm DEPENDS ${PTO_ASM_OUTPUTS})
+  add_custom_target(pto_deepseek_linx_asm DEPENDS ${PTO_DEEPSEEK_ASM_OUTPUTS})
+  add_custom_target(
+    pto_deepseek_linx_contracts
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_tile_asm_contracts.py
+            ${PTO_DEEPSEEK_ASM_OUTPUTS}
+    DEPENDS pto_deepseek_linx_asm
+    VERBATIM)
   add_custom_target(
     pto_linx_contracts
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_tile_asm_contracts.py ${PTO_ASM_OUTPUTS}

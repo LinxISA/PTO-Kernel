@@ -335,6 +335,22 @@ constexpr unsigned TORS = 0x027u;
 constexpr unsigned TXORS = 0x028u;
 constexpr unsigned TSHLS = 0x029u;
 constexpr unsigned TSHRS = 0x02au;
+constexpr unsigned TCMP = 0x02bu;
+constexpr unsigned TSEL = 0x02cu;
+constexpr unsigned TABS = 0x02du;
+constexpr unsigned TNOT = 0x02eu;
+constexpr unsigned TCMPS = 0x033u;
+constexpr unsigned TSELS = 0x034u;
+constexpr unsigned TCONCAT = 0x087u;
+constexpr unsigned TSORT = 0x0c0u;
+constexpr unsigned TMRGSORT = 0x0c1u;
+constexpr unsigned THISTOGRAM = 0x0c2u;
+constexpr unsigned TPARTADD = 0x0c3u;
+constexpr unsigned TPARTMUL = 0x0c4u;
+constexpr unsigned TPARTMAX = 0x0c5u;
+constexpr unsigned TPARTMIN = 0x0c6u;
+constexpr unsigned TPARTARGMAX = 0x0c7u;
+constexpr unsigned TPARTARGMIN = 0x0c8u;
 } // namespace tepl
 
 // Core tile ops used by PR5 FlashAttention bring-up.
@@ -439,9 +455,65 @@ inline void TMAX(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
       src0.raw(), src1.raw());
 }
 
+template <typename DstTile, typename SrcTile0, typename SrcTile1>
+inline void TDIV(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
+  dst.raw() = linx::detail::teplBinary<tepl::TDIV, detail::tileSizeCode<DstTile>(),
+                                       detail::tileDTypeCode<DstTile>()>(
+      src0.raw(), src1.raw());
+}
+
+template <typename DstTile, typename SrcTile0, typename SrcTile1>
+inline void TMIN(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
+  dst.raw() = linx::detail::teplBinary<tepl::TMIN, detail::tileSizeCode<DstTile>(),
+                                       detail::tileDTypeCode<DstTile>()>(
+      src0.raw(), src1.raw());
+}
+
+template <typename DstTile, typename SrcTile0, typename SrcTile1>
+inline void TAND(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
+  dst.raw() = linx::detail::teplBinary<tepl::TAND, detail::tileSizeCode<DstTile>(),
+                                       detail::tileDTypeCode<DstTile>()>(
+      src0.raw(), src1.raw());
+}
+
+template <typename DstTile, typename SrcTile0, typename SrcTile1>
+inline void TOR(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
+  dst.raw() = linx::detail::teplBinary<tepl::TOR, detail::tileSizeCode<DstTile>(),
+                                       detail::tileDTypeCode<DstTile>()>(
+      src0.raw(), src1.raw());
+}
+
+template <typename DstTile, typename SrcTile0, typename SrcTile1>
+inline void TXOR(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
+  dst.raw() = linx::detail::teplBinary<tepl::TXOR, detail::tileSizeCode<DstTile>(),
+                                       detail::tileDTypeCode<DstTile>()>(
+      src0.raw(), src1.raw());
+}
+
+template <typename DstTile, typename SrcTile0, typename SrcTile1>
+inline void TSHL(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
+  dst.raw() = linx::detail::teplBinary<tepl::TSHL, detail::tileSizeCode<DstTile>(),
+                                       detail::tileDTypeCode<DstTile>()>(
+      src0.raw(), src1.raw());
+}
+
+template <typename DstTile, typename SrcTile0, typename SrcTile1>
+inline void TSHR(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
+  dst.raw() = linx::detail::teplBinary<tepl::TSHR, detail::tileSizeCode<DstTile>(),
+                                       detail::tileDTypeCode<DstTile>()>(
+      src0.raw(), src1.raw());
+}
+
 template <typename DstTile, typename SrcTile>
 inline void TROWMAX(DstTile &dst, const SrcTile &src) {
   dst.raw() = linx::detail::teplUnary<tepl::TROWMAX,
+                                      detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(src.raw());
+}
+
+template <typename DstTile, typename SrcTile>
+inline void TROWMIN(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::TROWMIN,
                                       detail::tileSizeCode<DstTile>(),
                                       detail::tileDTypeCode<DstTile>()>(src.raw());
 }
@@ -454,8 +526,59 @@ inline void TROWSUM(DstTile &dst, const SrcTile &src) {
 }
 
 template <typename DstTile, typename SrcTile>
+inline void TCOLMAX(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::TCOLMAX,
+                                      detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(src.raw());
+}
+
+template <typename DstTile, typename SrcTile>
+inline void TCOLMIN(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::TCOLMIN,
+                                      detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(src.raw());
+}
+
+template <typename DstTile, typename SrcTile>
+inline void TCOLSUM(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::TCOLSUM,
+                                      detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(src.raw());
+}
+
+template <typename DstTile, typename SrcTile>
+inline void TRELU(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::TRELU,
+                                      detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(src.raw());
+}
+
+template <typename DstTile, typename SrcTile>
 inline void TEXP(DstTile &dst, const SrcTile &src) {
   dst.raw() = linx::detail::teplUnary<tepl::TEXP, detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(
+      src.raw());
+}
+
+template <typename DstTile, typename SrcTile>
+inline void TLOG(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::TLOG, detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(
+      src.raw());
+}
+
+template <typename DstTile, typename SrcTile>
+inline void TSQRT(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::TSQRT,
+                                      detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(
+      src.raw());
+}
+
+template <typename DstTile, typename SrcTile>
+inline void TRSQRT(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::TRSQRT,
+                                      detail::tileSizeCode<DstTile>(),
                                       detail::tileDTypeCode<DstTile>()>(
       src.raw());
 }
@@ -467,9 +590,135 @@ inline void TRECIP(DstTile &dst, const SrcTile &src) {
                                       detail::tileDTypeCode<DstTile>()>(src.raw());
 }
 
+template <typename DstTile, typename SrcTile>
+inline void TABS(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::TABS, detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(
+      src.raw());
+}
+
+template <typename DstTile, typename SrcTile>
+inline void TNOT(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::TNOT, detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(
+      src.raw());
+}
+
+template <typename DstTile, typename SrcTile>
+inline void TRESHAPE(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::TRESHAPE,
+                                      detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(
+      src.raw());
+}
+
+template <typename DstTile, typename SrcTile>
+inline void TTRANSPOSE(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::TTRANSPOSE,
+                                      detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(
+      src.raw());
+}
+
+template <typename DstTile, typename SrcTile>
+inline void TSORT(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::TSORT,
+                                      detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(
+      src.raw());
+}
+
+template <typename DstTile, typename SrcTile>
+inline void THISTOGRAM(DstTile &dst, const SrcTile &src) {
+  dst.raw() = linx::detail::teplUnary<tepl::THISTOGRAM,
+                                      detail::tileSizeCode<DstTile>(),
+                                      detail::tileDTypeCode<DstTile>()>(
+      src.raw());
+}
+
+template <typename DstTile, typename SrcTile0, typename SrcTile1>
+inline void TGATHER(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
+  dst.raw() = linx::detail::teplBinary<tepl::TGATHER,
+                                       detail::tileSizeCode<DstTile>(),
+                                       detail::tileDTypeCode<DstTile>()>(
+      src0.raw(), src1.raw());
+}
+
+template <typename DstTile, typename SrcTile0, typename SrcTile1>
+inline void TSCATTER(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
+  dst.raw() = linx::detail::teplBinary<tepl::TSCATTER,
+                                       detail::tileSizeCode<DstTile>(),
+                                       detail::tileDTypeCode<DstTile>()>(
+      src0.raw(), src1.raw());
+}
+
 template <typename DstTile, typename SrcTile, typename Scalar>
 inline void TMULS(DstTile &dst, const SrcTile &src, Scalar scalar) {
   dst.raw() = linx::detail::teplBinaryScalar<tepl::TMULS,
+                                             detail::tileSizeCode<DstTile>(),
+                                             detail::tileDTypeCode<DstTile>(), 1u>(
+      src.raw(), scalar);
+}
+
+template <typename DstTile, typename SrcTile, typename Scalar>
+inline void TADDS(DstTile &dst, const SrcTile &src, Scalar scalar) {
+  dst.raw() = linx::detail::teplBinaryScalar<tepl::TADDS,
+                                             detail::tileSizeCode<DstTile>(),
+                                             detail::tileDTypeCode<DstTile>(), 1u>(
+      src.raw(), scalar);
+}
+
+template <typename DstTile, typename SrcTile, typename Scalar>
+inline void TSUBS(DstTile &dst, const SrcTile &src, Scalar scalar) {
+  dst.raw() = linx::detail::teplBinaryScalar<tepl::TSUBS,
+                                             detail::tileSizeCode<DstTile>(),
+                                             detail::tileDTypeCode<DstTile>(), 1u>(
+      src.raw(), scalar);
+}
+
+template <typename DstTile, typename SrcTile, typename Scalar>
+inline void TDIVS(DstTile &dst, const SrcTile &src, Scalar scalar) {
+  dst.raw() = linx::detail::teplBinaryScalar<tepl::TDIVS,
+                                             detail::tileSizeCode<DstTile>(),
+                                             detail::tileDTypeCode<DstTile>(), 1u>(
+      src.raw(), scalar);
+}
+
+template <typename DstTile, typename SrcTile, typename Scalar>
+inline void TMAXS(DstTile &dst, const SrcTile &src, Scalar scalar) {
+  dst.raw() = linx::detail::teplBinaryScalar<tepl::TMAXS,
+                                             detail::tileSizeCode<DstTile>(),
+                                             detail::tileDTypeCode<DstTile>(), 1u>(
+      src.raw(), scalar);
+}
+
+template <typename DstTile, typename SrcTile, typename Scalar>
+inline void TMINS(DstTile &dst, const SrcTile &src, Scalar scalar) {
+  dst.raw() = linx::detail::teplBinaryScalar<tepl::TMINS,
+                                             detail::tileSizeCode<DstTile>(),
+                                             detail::tileDTypeCode<DstTile>(), 1u>(
+      src.raw(), scalar);
+}
+
+template <typename DstTile, typename SrcTile, typename Scalar>
+inline void TXORS(DstTile &dst, const SrcTile &src, Scalar scalar) {
+  dst.raw() = linx::detail::teplBinaryScalar<tepl::TXORS,
+                                             detail::tileSizeCode<DstTile>(),
+                                             detail::tileDTypeCode<DstTile>(), 1u>(
+      src.raw(), scalar);
+}
+
+template <typename DstTile, typename SrcTile, typename Scalar>
+inline void TSHLS(DstTile &dst, const SrcTile &src, Scalar scalar) {
+  dst.raw() = linx::detail::teplBinaryScalar<tepl::TSHLS,
+                                             detail::tileSizeCode<DstTile>(),
+                                             detail::tileDTypeCode<DstTile>(), 1u>(
+      src.raw(), scalar);
+}
+
+template <typename DstTile, typename SrcTile, typename Scalar>
+inline void TSHRS(DstTile &dst, const SrcTile &src, Scalar scalar) {
+  dst.raw() = linx::detail::teplBinaryScalar<tepl::TSHRS,
                                              detail::tileSizeCode<DstTile>(),
                                              detail::tileDTypeCode<DstTile>(), 1u>(
       src.raw(), scalar);
