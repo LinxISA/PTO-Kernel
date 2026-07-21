@@ -30,6 +30,11 @@ if(PTO_ENABLE_TESTS)
     target_link_libraries(pto_block_vector_smoke PRIVATE pto_headers)
     target_compile_definitions(pto_block_vector_smoke PRIVATE PTO_HOST_SIM=1)
     add_test(NAME pto_block_vector_smoke COMMAND pto_block_vector_smoke)
+
+    add_executable(pto_tile_shape_smoke tests/tile_shape_smoke.cpp)
+    target_link_libraries(pto_tile_shape_smoke PRIVATE pto_headers)
+    target_compile_definitions(pto_tile_shape_smoke PRIVATE PTO_HOST_SIM=1)
+    add_test(NAME pto_tile_shape_smoke COMMAND pto_tile_shape_smoke)
     add_test(
       NAME pto_deepseek_tilekernels_manifest
       COMMAND ${PTO_PYTHON3}

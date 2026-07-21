@@ -96,12 +96,12 @@ def check_file(path: Path) -> list[str]:
                 line.strip()
                 for line in tail
                 if line.strip() and not line.lstrip().startswith("#")
-            ][:2]
-            if len(following) != 2 or not all(
-                line.startswith("C.B.DIMI") for line in following
+            ][:3]
+            if len(following) != 3 or not all(
+                line.startswith(("C.B.DIMI", "B.DIM")) for line in following
             ):
                 errors.append(
-                    f"TEPL block lacks adjacent canonical LB0/LB1 dimensions: "
+                    f"TEPL block lacks adjacent canonical LB0/LB1/LB2 dimensions: "
                     f"{path}:{text.count(chr(10), 0, start.start()) + 1}"
                 )
     for pat in FORBIDDEN_PATTERNS:

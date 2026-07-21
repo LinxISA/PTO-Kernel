@@ -7,6 +7,8 @@
 
 namespace pto {
 
+constexpr int DYNAMIC = -1;
+
 enum class Location : uint8_t {
   Vec,
   Left,
@@ -19,22 +21,19 @@ enum class BLayout : uint8_t {
   ColMajor = 1,
 };
 
-template <int Rows_, int Cols_>
-struct RowMajor {
+template <int Rows_, int Cols_> struct RowMajor {
   static constexpr int Rows = Rows_;
   static constexpr int Cols = Cols_;
   static constexpr bool IsRowMajor = true;
 };
 
-template <int Rows_, int Cols_>
-struct ColMajor {
+template <int Rows_, int Cols_> struct ColMajor {
   static constexpr int Rows = Rows_;
   static constexpr int Cols = Cols_;
   static constexpr bool IsRowMajor = false;
 };
 
-template <typename Element_, typename Layout_>
-struct global_tensor {
+template <typename Element_, typename Layout_> struct global_tensor {
   using DType = Element_;
   using Layout = Layout_;
 };
@@ -43,11 +42,9 @@ namespace detail {
 
 using ptrdiff_builtin_t = __PTRDIFF_TYPE__;
 
-template <typename... Ts>
-using void_t = void;
+template <typename... Ts> using void_t = void;
 
-template <int Value>
-struct StaticIndex {
+template <int Value> struct StaticIndex {
   static constexpr int value = Value;
   constexpr operator int() const { return Value; }
 };
@@ -61,43 +58,39 @@ inline __attribute__((always_inline)) void static_for(Fn &&fn) {
 }
 
 // TMA format selectors used by B.ARG in canonical v0.57.
-constexpr long long kLayoutNorm = 0ll;     // NORM.normal
-constexpr long long kLayoutND2NZ = 2ll;    // ND2NZ.normal
-constexpr long long kLayoutND2ZN = 3ll;    // ND2ZN.normal
-constexpr long long kLayoutDN2ZN = 8ll;    // DN2ZN.normal
-constexpr long long kLayoutDN2NZ = 9ll;    // DN2NZ.normal
+constexpr long long kLayoutNorm = 0ll;  // NORM.normal
+constexpr long long kLayoutND2NZ = 2ll; // ND2NZ.normal
+constexpr long long kLayoutND2ZN = 3ll; // ND2ZN.normal
+constexpr long long kLayoutDN2ZN = 8ll; // DN2ZN.normal
+constexpr long long kLayoutDN2NZ = 9ll; // DN2NZ.normal
 
-template <typename TileT>
-constexpr unsigned tileBytes() {
+template <typename TileT> constexpr unsigned tileBytes() {
   constexpr int rows = TileT::Rows;
   constexpr int cols = TileT::Cols;
   constexpr unsigned bytes =
       static_cast<unsigned>(rows * cols * sizeof(typename TileT::DType));
-  static_assert(bytes > 0u, "PTO Linx canonical v0.57: tile bytes must be positive");
+  static_assert(bytes > 0u,
+                "PTO Linx canonical v0.57: tile bytes must be positive");
   return bytes;
 }
 
-template <typename TileT>
-constexpr unsigned tileSizeCode() {
+template <typename TileT> constexpr unsigned tileSizeCode() {
   static_assert(tileBytes<TileT>() <= linx::detail::kMaxTileBytes,
                 "PTO Linx canonical v0.57: tile size exceeds 4KB");
-  // Keep a single 4KB size profile in PR5 user-facing wrappers to avoid
-  // cross-op metadata skew while strict Tile SSA balancing is enabled.
+  // Keep one 4 KiB carrier across data types. TCVT changes the element type,
+  // but not the architectural tile-register capacity or its SSA identity.
   return 8u;
 }
 
-template <typename TileT>
-constexpr unsigned tileDTypeCode() {
+template <typename TileT> constexpr unsigned tileDTypeCode() {
   return linx::detail::DTypeCode<typename TileT::DType>::value;
 }
 
-template <typename TileT>
-constexpr long long tileLayoutCode() {
+template <typename TileT> constexpr long long tileLayoutCode() {
   return TileT::LayoutTag == BLayout::RowMajor ? 0ll : 1ll;
 }
 
-template <typename GTensor>
-constexpr long long gmStrideBytes() {
+template <typename GTensor> constexpr long long gmStrideBytes() {
   constexpr long long elemBytes =
       static_cast<long long>(sizeof(typename GTensor::DType));
   if constexpr (GTensor::Layout::IsRowMajor)
@@ -116,16 +109,14 @@ constexpr long long tensorTileLayoutCode() {
   return kLayoutNorm;
 }
 
-template <typename TileT>
-constexpr long long tileLB0() {
-  return TileT::RowValid > 0 ? static_cast<long long>(TileT::RowValid)
-                             : static_cast<long long>(TileT::Rows);
-}
-
-template <typename TileT>
-constexpr long long tileLB1() {
+template <typename TileT> constexpr long long tileLB0() {
   return TileT::ColValid > 0 ? static_cast<long long>(TileT::ColValid)
                              : static_cast<long long>(TileT::Cols);
+}
+
+template <typename TileT> constexpr long long tileLB1() {
+  return TileT::RowValid > 0 ? static_cast<long long>(TileT::RowValid)
+                             : static_cast<long long>(TileT::Rows);
 }
 
 template <typename GTensor, typename TileT>
@@ -143,15 +134,9 @@ inline auto addressPtr(const AddressLike &addr) -> decltype(addr.ptr()) {
   return addr.ptr();
 }
 
-template <typename T>
-inline T *addressPtr(T *addr) {
-  return addr;
-}
+template <typename T> inline T *addressPtr(T *addr) { return addr; }
 
-template <typename T>
-inline const T *addressPtr(const T *addr) {
-  return addr;
-}
+template <typename T> inline const T *addressPtr(const T *addr) { return addr; }
 
 template <typename AddressLike, typename TileT, typename = void>
 struct AddressDesc {
@@ -162,11 +147,10 @@ struct AddressDesc {
 };
 
 template <typename AddressLike, typename TileT>
-struct AddressDesc<AddressLike, TileT,
-                   void_t<decltype(AddressLike::kLayoutCode),
-                          decltype(AddressLike::kLB0),
-                          decltype(AddressLike::kLB1),
-                          decltype(AddressLike::kStrideBytes)>> {
+struct AddressDesc<
+    AddressLike, TileT,
+    void_t<decltype(AddressLike::kLayoutCode), decltype(AddressLike::kLB0),
+           decltype(AddressLike::kLB1), decltype(AddressLike::kStrideBytes)>> {
   static constexpr long long Layout = AddressLike::kLayoutCode;
   static constexpr long long LB0 = AddressLike::kLB0;
   static constexpr long long LB1 = AddressLike::kLB1;
@@ -212,17 +196,33 @@ struct Tile {
   static constexpr int ValidRow = RowValid_;
   static constexpr int ValidCol = ColValid_;
   static constexpr BLayout LayoutTag = Layout_;
-  static constexpr int RowStride =
-      LayoutTag == BLayout::RowMajor ? Cols_ : 1;
-  static constexpr int ColStride =
-      LayoutTag == BLayout::RowMajor ? 1 : Rows_;
+  static constexpr int RowStride = LayoutTag == BLayout::RowMajor ? Cols_ : 1;
+  static constexpr int ColStride = LayoutTag == BLayout::RowMajor ? 1 : Rows_;
 
-  Tile() = default;
+  static_assert(RowValid_ == DYNAMIC || (RowValid_ > 0 && RowValid_ <= Rows_),
+                "PTO Linx: valid rows must fit the physical tile");
+  static_assert(ColValid_ == DYNAMIC || (ColValid_ > 0 && ColValid_ <= Cols_),
+                "PTO Linx: valid columns must fit the physical tile");
 
-  template <typename Scalar>
-  explicit Tile(Scalar scalar) {
+  Tile()
+      : valid_rows_(RowValid_ == DYNAMIC ? Rows_ : RowValid_),
+        valid_cols_(ColValid_ == DYNAMIC ? Cols_ : ColValid_) {}
+
+  Tile(int validRows, int validCols)
+      : valid_rows_(validRows), valid_cols_(validCols) {}
+
+  template <typename Scalar> explicit Tile(Scalar scalar) {
     raw_ = linx::detail::teplSplat<0x019u, detail::tileSizeCode<Tile>(),
-                                   detail::tileDTypeCode<Tile>(), 2u>(scalar);
+                                   detail::tileDTypeCode<Tile>(), 2u>(
+        scalar, GetValidCol(), GetValidRow(), Cols);
+  }
+
+  int GetValidRow() const { return valid_rows_; }
+  int GetValidCol() const { return valid_cols_; }
+
+  void SetValidShape(int validRows, int validCols) {
+    valid_rows_ = validRows;
+    valid_cols_ = validCols;
   }
 
   RawTile &raw() { return raw_; }
@@ -232,28 +232,26 @@ struct Tile {
 
 private:
   RawTile raw_{};
+  int valid_rows_ = RowValid_ == DYNAMIC ? Rows_ : RowValid_;
+  int valid_cols_ = ColValid_ == DYNAMIC ? Cols_ : ColValid_;
 };
 
 template <typename Element_, int Rows_, int Cols_, int RowValid_ = Rows_,
           int ColValid_ = Cols_>
-using TileLeft =
-    Tile<Location::Left, Element_, Rows_, Cols_, BLayout::ColMajor, RowValid_,
-         ColValid_>;
+using TileLeft = Tile<Location::Left, Element_, Rows_, Cols_, BLayout::ColMajor,
+                      RowValid_, ColValid_>;
 
 template <typename Element_, int Rows_, int Cols_, int RowValid_ = Rows_,
           int ColValid_ = Cols_>
-using TileRight =
-    Tile<Location::Right, Element_, Rows_, Cols_, BLayout::RowMajor, RowValid_,
-         ColValid_>;
+using TileRight = Tile<Location::Right, Element_, Rows_, Cols_,
+                       BLayout::RowMajor, RowValid_, ColValid_>;
 
 template <typename Element_, int Rows_, int Cols_, int RowValid_ = Rows_,
           int ColValid_ = Cols_>
-using TileAcc =
-    Tile<Location::Acc, Element_, Rows_, Cols_, BLayout::ColMajor, RowValid_,
-         ColValid_>;
+using TileAcc = Tile<Location::Acc, Element_, Rows_, Cols_, BLayout::ColMajor,
+                     RowValid_, ColValid_>;
 
-template <typename GTensor, typename TileT>
-class global_iterator {
+template <typename GTensor, typename TileT> class global_iterator {
 public:
   using Element = typename GTensor::DType;
 
@@ -265,13 +263,14 @@ public:
     static constexpr long long kLayoutCode =
         detail::tensorTileLayoutCode<GTensor, TileT>();
     // TMA contract: LB0/LB1 are GM-side inner/outer counts.
-    // ND(row-major): inner=cols, outer=rows; DN(column-major): inner=rows, outer=cols.
-    static constexpr long long kLB0 =
-        GTensor::Layout::IsRowMajor ? detail::tileLB1<TileT>()
-                                    : detail::tileLB0<TileT>();
-    static constexpr long long kLB1 =
-        GTensor::Layout::IsRowMajor ? detail::tileLB0<TileT>()
-                                    : detail::tileLB1<TileT>();
+    // ND(row-major): inner=cols, outer=rows; DN(column-major): inner=rows,
+    // outer=cols.
+    static constexpr long long kLB0 = GTensor::Layout::IsRowMajor
+                                          ? detail::tileLB1<TileT>()
+                                          : detail::tileLB0<TileT>();
+    static constexpr long long kLB1 = GTensor::Layout::IsRowMajor
+                                          ? detail::tileLB0<TileT>()
+                                          : detail::tileLB1<TileT>();
     static constexpr long long kStrideBytes = detail::gmStrideBytes<GTensor>();
 
     Element *base;
@@ -356,38 +355,40 @@ constexpr unsigned TPARTARGMIN = 0x0c8u;
 // Core tile ops used by PR5 FlashAttention bring-up.
 template <typename DstTile, typename SrcAddress>
 inline void TLOAD(DstTile &dst, const SrcAddress &src) {
-  dst.raw() = linx::detail::tileTLoad<detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>(),
-                                      detail::addressLayoutCode<SrcAddress, DstTile>(),
-                                      detail::addressLB0<SrcAddress, DstTile>(),
-                                      detail::addressLB1<SrcAddress, DstTile>(),
-                                      detail::addressStrideBytes<SrcAddress, DstTile>()>(
-      reinterpret_cast<const void *>(detail::addressPtr(src)));
+  dst.raw() =
+      linx::detail::tileTLoad<detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>(),
+                              detail::addressLayoutCode<SrcAddress, DstTile>()>(
+          reinterpret_cast<const void *>(detail::addressPtr(src)),
+          dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols,
+          detail::addressStrideBytes<SrcAddress, DstTile>());
 }
 
 template <typename DstAddress, typename SrcTile>
 inline void TSTORE(const DstAddress &dst, SrcTile &src) {
   linx::detail::tileTStore<detail::tileSizeCode<SrcTile>(),
                            detail::tileDTypeCode<SrcTile>(),
-                           detail::addressLayoutCode<DstAddress, SrcTile>(),
-                           detail::addressLB0<DstAddress, SrcTile>(),
-                           detail::addressLB1<DstAddress, SrcTile>(),
-                           detail::addressStrideBytes<DstAddress, SrcTile>()>(
-      reinterpret_cast<void *>(detail::addressPtr(dst)), src.raw());
+                           detail::addressLayoutCode<DstAddress, SrcTile>()>(
+      reinterpret_cast<void *>(detail::addressPtr(dst)), src.raw(),
+      src.GetValidCol(), src.GetValidRow(), SrcTile::Cols,
+      detail::addressStrideBytes<DstAddress, SrcTile>());
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TMOV(DstTile &dst, const SrcTile &src, unsigned mode = 0u) {
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
   if (mode == 1u) {
-    dst.raw() = linx::detail::tileTMov<detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>(),
-                                       detail::tileLayoutCode<DstTile>(), 1u, 1u>(
-        src.raw());
+    dst.raw() =
+        linx::detail::tileTMov<detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>(),
+                               detail::tileLayoutCode<DstTile>(), 1u, 1u>(
+            src.raw());
   } else {
-    dst.raw() = linx::detail::tileTMov<detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>(),
-                                       detail::tileLayoutCode<DstTile>(), 1u, 0u>(
-        src.raw());
+    dst.raw() =
+        linx::detail::tileTMov<detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>(),
+                               detail::tileLayoutCode<DstTile>(), 1u, 0u>(
+            src.raw());
   }
 }
 
@@ -408,7 +409,8 @@ inline void TMATMUL_ACC(TileRes &dst, TileRes &acc, const TileLeft_ &lhs,
   constexpr unsigned M = static_cast<unsigned>(TileRes::Rows);
   constexpr unsigned N = static_cast<unsigned>(TileRes::Cols);
   constexpr unsigned K = static_cast<unsigned>(TileLeft_::Cols);
-  dst.raw() = linx::detail::cubeMamulbAcc<M, N, K>(acc.raw(), lhs.raw(), rhs.raw());
+  dst.raw() =
+      linx::detail::cubeMamulbAcc<M, N, K>(acc.raw(), lhs.raw(), rhs.raw());
 }
 
 template <typename TileRes, typename TileLeft_, typename TileRight_>
@@ -422,329 +424,434 @@ inline void MATMACC(TileRes &dst, const TileLeft_ &lhs, const TileRight_ &rhs) {
 
 template <typename DstTile, typename SrcTile>
 inline void TCVT(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TCVT, detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(
-      src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TCVT, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TADD(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
-  dst.raw() = linx::detail::teplBinary<tepl::TADD, detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>()>(
-      src0.raw(), src1.raw());
+  dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinary<tepl::TADD, detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>()>(
+          src0.raw(), src1.raw(), dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TSUB(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
-  dst.raw() = linx::detail::teplBinary<tepl::TSUB, detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>()>(
-      src0.raw(), src1.raw());
+  dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinary<tepl::TSUB, detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>()>(
+          src0.raw(), src1.raw(), dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TMUL(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
-  dst.raw() = linx::detail::teplBinary<tepl::TMUL, detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>()>(
-      src0.raw(), src1.raw());
+  dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinary<tepl::TMUL, detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>()>(
+          src0.raw(), src1.raw(), dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TMAX(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
-  dst.raw() = linx::detail::teplBinary<tepl::TMAX, detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>()>(
-      src0.raw(), src1.raw());
+  dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinary<tepl::TMAX, detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>()>(
+          src0.raw(), src1.raw(), dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TDIV(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
-  dst.raw() = linx::detail::teplBinary<tepl::TDIV, detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>()>(
-      src0.raw(), src1.raw());
+  dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinary<tepl::TDIV, detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>()>(
+          src0.raw(), src1.raw(), dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TMIN(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
-  dst.raw() = linx::detail::teplBinary<tepl::TMIN, detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>()>(
-      src0.raw(), src1.raw());
+  dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinary<tepl::TMIN, detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>()>(
+          src0.raw(), src1.raw(), dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TAND(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
-  dst.raw() = linx::detail::teplBinary<tepl::TAND, detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>()>(
-      src0.raw(), src1.raw());
+  dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinary<tepl::TAND, detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>()>(
+          src0.raw(), src1.raw(), dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TOR(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
-  dst.raw() = linx::detail::teplBinary<tepl::TOR, detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>()>(
-      src0.raw(), src1.raw());
+  dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinary<tepl::TOR, detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>()>(
+          src0.raw(), src1.raw(), dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TXOR(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
-  dst.raw() = linx::detail::teplBinary<tepl::TXOR, detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>()>(
-      src0.raw(), src1.raw());
+  dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinary<tepl::TXOR, detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>()>(
+          src0.raw(), src1.raw(), dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TSHL(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
-  dst.raw() = linx::detail::teplBinary<tepl::TSHL, detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>()>(
-      src0.raw(), src1.raw());
+  dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinary<tepl::TSHL, detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>()>(
+          src0.raw(), src1.raw(), dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TSHR(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
-  dst.raw() = linx::detail::teplBinary<tepl::TSHR, detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>()>(
-      src0.raw(), src1.raw());
+  dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinary<tepl::TSHR, detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>()>(
+          src0.raw(), src1.raw(), dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TROWMAX(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TROWMAX,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TROWMAX, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
+  dst.SetValidShape(src.GetValidRow(), 1);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TROWMIN(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TROWMIN,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TROWMIN, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
+  dst.SetValidShape(src.GetValidRow(), 1);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TROWSUM(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TROWSUM,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TROWSUM, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
+  dst.SetValidShape(src.GetValidRow(), 1);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TCOLMAX(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TCOLMAX,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TCOLMAX, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
+  dst.SetValidShape(1, src.GetValidCol());
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TCOLMIN(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TCOLMIN,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TCOLMIN, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
+  dst.SetValidShape(1, src.GetValidCol());
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TCOLSUM(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TCOLSUM,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TCOLSUM, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
+  dst.SetValidShape(1, src.GetValidCol());
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TRELU(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TRELU,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TRELU, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TEXP(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TEXP, detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(
-      src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TEXP, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TLOG(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TLOG, detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(
-      src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TLOG, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TSQRT(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TSQRT,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(
-      src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TSQRT, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TRSQRT(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TRSQRT,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(
-      src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TRSQRT, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TRECIP(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TRECIP,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TRECIP, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TABS(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TABS, detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(
-      src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TABS, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TNOT(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TNOT, detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(
-      src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TNOT, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TRESHAPE(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TRESHAPE,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(
-      src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TRESHAPE, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TTRANSPOSE(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TTRANSPOSE,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(
-      src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TTRANSPOSE, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
+  dst.SetValidShape(src.GetValidCol(), src.GetValidRow());
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TSORT(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TSORT,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(
-      src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TSORT, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void THISTOGRAM(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::THISTOGRAM,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(
-      src.raw());
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::THISTOGRAM, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
+  dst.SetValidShape(1, src.GetValidCol());
 }
 
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TGATHER(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
-  dst.raw() = linx::detail::teplBinary<tepl::TGATHER,
-                                       detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>()>(
-      src0.raw(), src1.raw());
+  dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinary<tepl::TGATHER, detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>()>(
+          src0.raw(), src1.raw(), dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TSCATTER(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
-  dst.raw() = linx::detail::teplBinary<tepl::TSCATTER,
-                                       detail::tileSizeCode<DstTile>(),
-                                       detail::tileDTypeCode<DstTile>()>(
-      src0.raw(), src1.raw());
+  dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinary<tepl::TSCATTER, detail::tileSizeCode<DstTile>(),
+                               detail::tileDTypeCode<DstTile>()>(
+          src0.raw(), src1.raw(), dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile, typename Scalar>
 inline void TMULS(DstTile &dst, const SrcTile &src, Scalar scalar) {
-  dst.raw() = linx::detail::teplBinaryScalar<tepl::TMULS,
-                                             detail::tileSizeCode<DstTile>(),
-                                             detail::tileDTypeCode<DstTile>(), 1u>(
-      src.raw(), scalar);
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinaryScalar<tepl::TMULS,
+                                     detail::tileSizeCode<DstTile>(),
+                                     detail::tileDTypeCode<DstTile>(), 1u>(
+          src.raw(), scalar, dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile, typename Scalar>
 inline void TADDS(DstTile &dst, const SrcTile &src, Scalar scalar) {
-  dst.raw() = linx::detail::teplBinaryScalar<tepl::TADDS,
-                                             detail::tileSizeCode<DstTile>(),
-                                             detail::tileDTypeCode<DstTile>(), 1u>(
-      src.raw(), scalar);
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinaryScalar<tepl::TADDS,
+                                     detail::tileSizeCode<DstTile>(),
+                                     detail::tileDTypeCode<DstTile>(), 1u>(
+          src.raw(), scalar, dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile, typename Scalar>
 inline void TSUBS(DstTile &dst, const SrcTile &src, Scalar scalar) {
-  dst.raw() = linx::detail::teplBinaryScalar<tepl::TSUBS,
-                                             detail::tileSizeCode<DstTile>(),
-                                             detail::tileDTypeCode<DstTile>(), 1u>(
-      src.raw(), scalar);
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinaryScalar<tepl::TSUBS,
+                                     detail::tileSizeCode<DstTile>(),
+                                     detail::tileDTypeCode<DstTile>(), 1u>(
+          src.raw(), scalar, dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile, typename Scalar>
 inline void TDIVS(DstTile &dst, const SrcTile &src, Scalar scalar) {
-  dst.raw() = linx::detail::teplBinaryScalar<tepl::TDIVS,
-                                             detail::tileSizeCode<DstTile>(),
-                                             detail::tileDTypeCode<DstTile>(), 1u>(
-      src.raw(), scalar);
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinaryScalar<tepl::TDIVS,
+                                     detail::tileSizeCode<DstTile>(),
+                                     detail::tileDTypeCode<DstTile>(), 1u>(
+          src.raw(), scalar, dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile, typename Scalar>
 inline void TMAXS(DstTile &dst, const SrcTile &src, Scalar scalar) {
-  dst.raw() = linx::detail::teplBinaryScalar<tepl::TMAXS,
-                                             detail::tileSizeCode<DstTile>(),
-                                             detail::tileDTypeCode<DstTile>(), 1u>(
-      src.raw(), scalar);
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinaryScalar<tepl::TMAXS,
+                                     detail::tileSizeCode<DstTile>(),
+                                     detail::tileDTypeCode<DstTile>(), 1u>(
+          src.raw(), scalar, dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile, typename Scalar>
 inline void TMINS(DstTile &dst, const SrcTile &src, Scalar scalar) {
-  dst.raw() = linx::detail::teplBinaryScalar<tepl::TMINS,
-                                             detail::tileSizeCode<DstTile>(),
-                                             detail::tileDTypeCode<DstTile>(), 1u>(
-      src.raw(), scalar);
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinaryScalar<tepl::TMINS,
+                                     detail::tileSizeCode<DstTile>(),
+                                     detail::tileDTypeCode<DstTile>(), 1u>(
+          src.raw(), scalar, dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile, typename Scalar>
 inline void TXORS(DstTile &dst, const SrcTile &src, Scalar scalar) {
-  dst.raw() = linx::detail::teplBinaryScalar<tepl::TXORS,
-                                             detail::tileSizeCode<DstTile>(),
-                                             detail::tileDTypeCode<DstTile>(), 1u>(
-      src.raw(), scalar);
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinaryScalar<tepl::TXORS,
+                                     detail::tileSizeCode<DstTile>(),
+                                     detail::tileDTypeCode<DstTile>(), 1u>(
+          src.raw(), scalar, dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile, typename Scalar>
 inline void TSHLS(DstTile &dst, const SrcTile &src, Scalar scalar) {
-  dst.raw() = linx::detail::teplBinaryScalar<tepl::TSHLS,
-                                             detail::tileSizeCode<DstTile>(),
-                                             detail::tileDTypeCode<DstTile>(), 1u>(
-      src.raw(), scalar);
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinaryScalar<tepl::TSHLS,
+                                     detail::tileSizeCode<DstTile>(),
+                                     detail::tileDTypeCode<DstTile>(), 1u>(
+          src.raw(), scalar, dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile, typename Scalar>
 inline void TSHRS(DstTile &dst, const SrcTile &src, Scalar scalar) {
-  dst.raw() = linx::detail::teplBinaryScalar<tepl::TSHRS,
-                                             detail::tileSizeCode<DstTile>(),
-                                             detail::tileDTypeCode<DstTile>(), 1u>(
-      src.raw(), scalar);
+  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
+  dst.raw() =
+      linx::detail::teplBinaryScalar<tepl::TSHRS,
+                                     detail::tileSizeCode<DstTile>(),
+                                     detail::tileDTypeCode<DstTile>(), 1u>(
+          src.raw(), scalar, dst.GetValidCol(), dst.GetValidRow(),
+          DstTile::Cols);
 }
 
 template <typename DstTile, typename Scalar>
 inline void TEXPANDS(DstTile &dst, Scalar scalar) {
-  dst.raw() = linx::detail::teplSplat<tepl::TEXPANDS,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>(), 2u>(scalar);
+  dst.raw() =
+      linx::detail::teplSplat<tepl::TEXPANDS, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>(), 2u>(
+          scalar, dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TCOLEXPAND(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TCOLEXPAND,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(
-      src.raw());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TCOLEXPAND, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile>
 inline void TROWEXPAND(DstTile &dst, const SrcTile &src) {
-  dst.raw() = linx::detail::teplUnary<tepl::TROWEXPAND,
-                                      detail::tileSizeCode<DstTile>(),
-                                      detail::tileDTypeCode<DstTile>()>(
-      src.raw());
+  dst.raw() =
+      linx::detail::teplUnary<tepl::TROWEXPAND, detail::tileSizeCode<DstTile>(),
+                              detail::tileDTypeCode<DstTile>()>(
+          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
 template <typename DstTile, typename SrcTile>

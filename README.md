@@ -46,9 +46,12 @@ The `kernels/upstream/deepseek/` lane ports all 37 kernel source files from
 `deepseek-ai/TileKernels` main at the exact commit recorded in the provenance
 manifest. The port is freestanding and has no Python, PyTorch, CUDA, or
 TileLang runtime dependency. Kernel data paths are loop-free C++ compositions
-of named PTO ISA v0.57 intrinsics; scalar loops are confined to the QEMU test
-harness and oracle. The executable closure profile is one 32x32 row-major tile,
-with larger tensors tiled by the caller.
+of named PTO ISA v0.57 intrinsics. Scalar iteration is limited to tile-grid
+control in the shared helper; element data paths remain PTO operations. The
+physical carrier is 32x32 row-major, while runtime dimensions drive rectangular
+tail masks (`LB0=ValidCol`, `LB1=ValidRow`, `LB2=physical Col`) and row stride.
+The QEMU suite covers both the 32x32 standard profile and non-multiple tail
+shapes, including a multi-tile 35x37 transpose.
 
 Run the host contracts locally:
 

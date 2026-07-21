@@ -2,23 +2,24 @@
 #include <common/deepseek_tilekernels.hpp>
 
 extern "C" void deepseek_quant_per_token_i8(int8_t *dst, float *scales,
-                                             const float *src, int tokens,
-                                             int hidden) {
+                                            const float *src, int tokens,
+                                            int hidden) {
   using namespace deepseek::pto57;
-  (void)tokens;
-  (void)hidden;
-  VecTile<float> input;
-  VecTile<float> scale;
-  VecTile<int8_t> quantized;
-  load(input, src);
-  quantize_rows(quantized, scale, input);
-  store(dst, quantized);
-  store(scales, scale);
+  for_each_tile_2d(
+      tokens, hidden, [&](int row, int col, int valid_rows, int valid_cols) {
+        VecTile<float> input(valid_rows, valid_cols);
+        VecTile<float> scale;
+        VecTile<int8_t> quantized;
+        load(input, src + row * hidden + col, valid_rows, valid_cols, hidden);
+        quantize_rows(quantized, scale, input);
+        store(dst + row * hidden + col, quantized, hidden);
+        store(scales + row, scale, 1);
+      });
 }
 
 extern "C" void deepseek_quant_per_block_i8(int8_t *dst, float *scales,
-                                             const float *src, int count,
-                                             int block) {
+                                            const float *src, int count,
+                                            int block) {
   using namespace deepseek::pto57;
   (void)count;
   (void)block;
@@ -31,8 +32,10 @@ extern "C" void deepseek_quant_per_block_i8(int8_t *dst, float *scales,
   store(scales, scale);
 }
 
-extern "C" void deepseek_quant_per_block_lossless_i8(
-    int8_t *dst, uint32_t *scale_bits, const float *src, int count, int block) {
+extern "C" void deepseek_quant_per_block_lossless_i8(int8_t *dst,
+                                                     uint32_t *scale_bits,
+                                                     const float *src,
+                                                     int count, int block) {
   using namespace deepseek::pto57;
   (void)count;
   (void)block;
@@ -46,8 +49,8 @@ extern "C" void deepseek_quant_per_block_lossless_i8(
 }
 
 extern "C" void deepseek_quant_per_channel_i8(int8_t *dst, float *scales,
-                                               const float *src, int rows,
-                                               int cols) {
+                                              const float *src, int rows,
+                                              int cols) {
   using namespace deepseek::pto57;
   (void)rows;
   (void)cols;
@@ -64,8 +67,10 @@ extern "C" void deepseek_quant_per_channel_i8(int8_t *dst, float *scales,
   store(scales, scale);
 }
 
-extern "C" void deepseek_quant_per_channel_transpose_i8(
-    int8_t *dst, float *scales, const float *src, int rows, int cols) {
+extern "C" void deepseek_quant_per_channel_transpose_i8(int8_t *dst,
+                                                        float *scales,
+                                                        const float *src,
+                                                        int rows, int cols) {
   using namespace deepseek::pto57;
   (void)rows;
   (void)cols;
@@ -80,9 +85,10 @@ extern "C" void deepseek_quant_per_channel_transpose_i8(
   store(scales, scale);
 }
 
-extern "C" void deepseek_quant_per_channel_fused_i8(
-    int8_t *dst, float *scales, const float *lhs, const float *rhs, int rows,
-    int cols) {
+extern "C" void deepseek_quant_per_channel_fused_i8(int8_t *dst, float *scales,
+                                                    const float *lhs,
+                                                    const float *rhs, int rows,
+                                                    int cols) {
   using namespace deepseek::pto57;
   (void)rows;
   (void)cols;
@@ -104,27 +110,32 @@ extern "C" void deepseek_quant_per_channel_fused_i8(
 }
 
 extern "C" void deepseek_quant_cast_back_f32(float *dst, const int8_t *src,
-                                              const float *scales, int rows,
-                                              int cols, bool per_token) {
+                                             const float *scales, int rows,
+                                             int cols, bool per_token) {
   using namespace deepseek::pto57;
-  (void)rows;
-  (void)cols;
-  (void)per_token;
-  VecTile<int8_t> quantized;
-  VecTile<float> converted;
-  VecTile<float> scale;
-  VecTile<float> expanded;
-  VecTile<float> output;
-  load(quantized, src);
-  load(scale, scales);
-  pto::TCVT(converted, quantized);
-  pto::TROWEXPAND(expanded, scale);
-  pto::TMUL(output, converted, expanded);
-  store(dst, output);
+  for_each_tile_2d(
+      rows, cols, [&](int row, int col, int valid_rows, int valid_cols) {
+        VecTile<int8_t> quantized(valid_rows, valid_cols);
+        VecTile<float> converted;
+        VecTile<float> scale;
+        VecTile<float> expanded(valid_rows, valid_cols);
+        VecTile<float> output;
+        load(quantized, src + row * cols + col, valid_rows, valid_cols, cols);
+        pto::TCVT(converted, quantized);
+        if (per_token) {
+          load(scale, scales + row, valid_rows, 1, 1);
+          pto::TROWEXPAND(expanded, scale);
+        } else {
+          load(scale, scales + col, 1, valid_cols, cols);
+          pto::TCOLEXPAND(expanded, scale);
+        }
+        pto::TMUL(output, converted, expanded);
+        store(dst + row * cols + col, output, cols);
+      });
 }
 
-extern "C" void deepseek_quant_per_token_e5m6(uint16_t *dst,
-                                               const float *src, int count) {
+extern "C" void deepseek_quant_per_token_e5m6(uint16_t *dst, const float *src,
+                                              int count) {
   using namespace deepseek::pto57;
   (void)count;
   VecTile<float> input;
@@ -134,9 +145,8 @@ extern "C" void deepseek_quant_per_token_e5m6(uint16_t *dst,
   store(dst, output);
 }
 
-extern "C" void deepseek_quant_cast_back_e5m6(float *dst,
-                                               const uint16_t *src,
-                                               int count) {
+extern "C" void deepseek_quant_cast_back_e5m6(float *dst, const uint16_t *src,
+                                              int count) {
   using namespace deepseek::pto57;
   (void)count;
   VecTile<uint16_t> input;
@@ -146,9 +156,10 @@ extern "C" void deepseek_quant_cast_back_e5m6(float *dst,
   store(dst, output);
 }
 
-extern "C" void deepseek_quant_swiglu_forward_per_token_i8(
-    int8_t *dst, float *scales, const float *gate, const float *up, int tokens,
-    int hidden) {
+extern "C" void
+deepseek_quant_swiglu_forward_per_token_i8(int8_t *dst, float *scales,
+                                           const float *gate, const float *up,
+                                           int tokens, int hidden) {
   using namespace deepseek::pto57;
   (void)tokens;
   (void)hidden;
