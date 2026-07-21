@@ -66,6 +66,11 @@ constexpr unsigned effectiveLB1() {
   return LB1 ? LB1 : defaultLB1<SizeCode>();
 }
 
+template <unsigned SizeCode, unsigned LB0, unsigned LB2>
+constexpr unsigned effectiveLB2() {
+  return LB2 ? LB2 : effectiveLB0<SizeCode, LB0>();
+}
+
 template <unsigned SizeCode, unsigned LB0>
 constexpr long long effectiveStrideBytes() {
   return static_cast<long long>(effectiveLB0<SizeCode, LB0>() * sizeof(int32_t));
@@ -76,12 +81,13 @@ template <unsigned SizeCode, unsigned Arg = 0, unsigned LB0 = 0,
 PTO_LINX_ALWAYS_INLINE TileI32 tload(const void *base) {
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
                 "tload size_code must be in [5,8]");
-  (void)LB2;
   constexpr unsigned Dim0 = effectiveLB0<SizeCode, LB0>();
   constexpr unsigned Dim1 = effectiveLB1<SizeCode, LB1>();
+  constexpr unsigned Dim2 = effectiveLB2<SizeCode, LB0, LB2>();
+  static_assert(Dim2 >= Dim0, "physical columns must cover valid columns");
   constexpr long long Stride = effectiveStrideBytes<SizeCode, LB0>();
   return __builtin_linx_tile_tload(base, SizeCode, kTileDTypeInt32, Arg, Dim0,
-                                   Dim1, Stride);
+                                   Dim1, Dim2, Stride);
 }
 
 template <unsigned SizeCode, unsigned Arg = 0, unsigned LB0 = 0,
@@ -89,12 +95,13 @@ template <unsigned SizeCode, unsigned Arg = 0, unsigned LB0 = 0,
 PTO_LINX_ALWAYS_INLINE void tstore(void *base, TileI32 tile) {
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
                 "tstore size_code must be in [5,8]");
-  (void)LB2;
   constexpr unsigned Dim0 = effectiveLB0<SizeCode, LB0>();
   constexpr unsigned Dim1 = effectiveLB1<SizeCode, LB1>();
+  constexpr unsigned Dim2 = effectiveLB2<SizeCode, LB0, LB2>();
+  static_assert(Dim2 >= Dim0, "physical columns must cover valid columns");
   constexpr long long Stride = effectiveStrideBytes<SizeCode, LB0>();
   __builtin_linx_tile_tstore(base, tile, SizeCode, kTileDTypeInt32, Arg, Dim0,
-                             Dim1, Stride);
+                             Dim1, Dim2, Stride);
 }
 
 template <unsigned M, unsigned N, unsigned K>

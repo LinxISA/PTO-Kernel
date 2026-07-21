@@ -35,10 +35,25 @@ if(PTO_ENABLE_TESTS)
     target_link_libraries(pto_tile_shape_smoke PRIVATE pto_headers)
     target_compile_definitions(pto_tile_shape_smoke PRIVATE PTO_HOST_SIM=1)
     add_test(NAME pto_tile_shape_smoke COMMAND pto_tile_shape_smoke)
+
+    add_executable(
+      pto_deepseek_kernel_host_oracle
+      tests/deepseek_kernel_host_oracle.cpp
+      kernels/upstream/deepseek/quant.cpp)
+    target_link_libraries(pto_deepseek_kernel_host_oracle PRIVATE pto_headers)
+    target_compile_definitions(pto_deepseek_kernel_host_oracle PRIVATE PTO_HOST_SIM=1)
+    add_test(NAME pto_deepseek_kernel_host_oracle
+             COMMAND pto_deepseek_kernel_host_oracle)
     add_test(
       NAME pto_deepseek_tilekernels_manifest
       COMMAND ${PTO_PYTHON3}
               ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_deepseek_tilekernels_manifest.py)
+    add_test(
+      NAME pto_deepseek_verification_inventory
+      COMMAND ${PTO_PYTHON3}
+              ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_deepseek_verification_coverage.py
+              --repo-root ${CMAKE_CURRENT_SOURCE_DIR}
+              --super-root ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 
     if(PTO_BENCHMARK_WORKBOOK)
       add_test(
@@ -110,6 +125,12 @@ if(PTO_ENABLE_LINX_CROSS)
     pto_deepseek_linx_contracts
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_tile_asm_contracts.py
             ${PTO_DEEPSEEK_ASM_OUTPUTS}
+    COMMAND ${PTO_PYTHON3}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_deepseek_verification_coverage.py
+            --repo-root ${CMAKE_CURRENT_SOURCE_DIR}
+            --super-root ${CMAKE_CURRENT_SOURCE_DIR}/../..
+            --asm ${PTO_DEEPSEEK_ASM_OUTPUTS}
+            --report-out ${CMAKE_BINARY_DIR}/deepseek-verification-coverage.json
     DEPENDS pto_deepseek_linx_asm
     VERBATIM)
   add_custom_target(

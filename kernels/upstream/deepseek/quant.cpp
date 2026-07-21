@@ -29,7 +29,7 @@ extern "C" void deepseek_quant_per_block_i8(int8_t *dst, float *scales,
   load(input, src);
   quantize_rows(quantized, scale, input);
   store(dst, quantized);
-  store(scales, scale);
+  store(scales, scale, 1);
 }
 
 extern "C" void deepseek_quant_per_block_lossless_i8(int8_t *dst,
@@ -45,7 +45,7 @@ extern "C" void deepseek_quant_per_block_lossless_i8(int8_t *dst,
   load(input, src);
   quantize_rows(quantized, scale, input);
   store(dst, quantized);
-  store(reinterpret_cast<float *>(scale_bits), scale);
+  store(reinterpret_cast<float *>(scale_bits), scale, 1);
 }
 
 extern "C" void deepseek_quant_per_channel_i8(int8_t *dst, float *scales,
@@ -64,7 +64,7 @@ extern "C" void deepseek_quant_per_channel_i8(int8_t *dst, float *scales,
   quantize_rows(quantized_t, scale, transposed);
   pto::TTRANSPOSE(quantized, quantized_t);
   store(dst, quantized);
-  store(scales, scale);
+  store(scales, scale, 1);
 }
 
 extern "C" void deepseek_quant_per_channel_transpose_i8(int8_t *dst,
@@ -82,7 +82,7 @@ extern "C" void deepseek_quant_per_channel_transpose_i8(int8_t *dst,
   pto::TTRANSPOSE(transposed, input);
   quantize_rows(quantized, scale, transposed);
   store(dst, quantized);
-  store(scales, scale);
+  store(scales, scale, 1);
 }
 
 extern "C" void deepseek_quant_per_channel_fused_i8(int8_t *dst, float *scales,
@@ -106,7 +106,7 @@ extern "C" void deepseek_quant_per_channel_fused_i8(int8_t *dst, float *scales,
   quantize_rows(quantized_t, scale, transposed);
   pto::TTRANSPOSE(quantized, quantized_t);
   store(dst, quantized);
-  store(scales, scale);
+  store(scales, scale, 1);
 }
 
 extern "C" void deepseek_quant_cast_back_f32(float *dst, const int8_t *src,
@@ -173,7 +173,7 @@ deepseek_quant_swiglu_forward_per_token_i8(int8_t *dst, float *scales,
   swiglu(activated, gate_tile, up_tile);
   quantize_rows(output, scale, activated);
   store(dst, output);
-  store(scales, scale);
+  store(scales, scale, 1);
 }
 
 extern "C" void deepseek_quant_swiglu_forward_per_channel_transpose_i8(
@@ -194,7 +194,7 @@ extern "C" void deepseek_quant_swiglu_forward_per_channel_transpose_i8(
   pto::TTRANSPOSE(transposed, activated);
   quantize_rows(output, scale, transposed);
   store(dst, output);
-  store(scales, scale);
+  store(scales, scale, 1);
 }
 
 extern "C" void deepseek_quant_swiglu_backward_per_token_i8(
@@ -235,6 +235,6 @@ extern "C" void deepseek_quant_swiglu_backward_per_token_i8(
   quantize_rows(grad_up_i8, up_scale, grad_up_f32);
   store(dgate, grad_gate_i8);
   store(dup, grad_up_i8);
-  store(gate_scales, gate_scale);
-  store(up_scales, up_scale);
+  store(gate_scales, gate_scale, 1);
+  store(up_scales, up_scale, 1);
 }
