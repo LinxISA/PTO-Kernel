@@ -52,14 +52,36 @@ stable_sort_rows(T *destination, const T *source, int rows, int cols) {
     T *output_row = destination + row * cols;
     const T *input_row = source + row * cols;
     for_each_index(cols, [&](int col) { output_row[col] = input_row[col]; });
-    for (int col = 1; col < cols; ++col) {
-      const T value = output_row[col];
-      int insert = col;
-      while (insert > 0 && value < output_row[insert - 1]) {
-        output_row[insert] = output_row[insert - 1];
-        --insert;
+    if (cols <= kCols) {
+      T scratch[kCols];
+      for (int width = 1; width < cols; width *= 2) {
+        for (int begin = 0; begin < cols; begin += width * 2) {
+          const int middle = tile_extent(begin + width, cols);
+          const int end = tile_extent(begin + width * 2, cols);
+          int left = begin;
+          int right = middle;
+          for (int output = begin; output < end; ++output) {
+            if (left < middle &&
+                (right >= end || !(output_row[right] < output_row[left]))) {
+              scratch[output] = output_row[left++];
+            } else {
+              scratch[output] = output_row[right++];
+            }
+          }
+        }
+        for_each_index(cols,
+                       [&](int col) { output_row[col] = scratch[col]; });
       }
-      output_row[insert] = value;
+    } else {
+      for (int col = 1; col < cols; ++col) {
+        const T value = output_row[col];
+        int insert = col;
+        while (insert > 0 && value < output_row[insert - 1]) {
+          output_row[insert] = output_row[insert - 1];
+          --insert;
+        }
+        output_row[insert] = value;
+      }
     }
   });
 }
