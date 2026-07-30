@@ -97,18 +97,14 @@ extern "C" void deepseek_moe_topk_sum_group_f32(float *topk_sum, int *top_group,
                                                 int experts_per_group,
                                                 int topk) {
   using namespace deepseek::pto0571;
-  (void)tokens;
-  (void)groups;
-  (void)experts_per_group;
   (void)topk;
   VecTile<float> input;
   VecTile<float> sum;
-  VecTile<int> group;
   load(input, scores);
   pto::TROWSUM(sum, input);
-  pto::TEXPANDS(group, 0);
   store(topk_sum, sum);
-  store(top_group, group);
+  for_each_index(tokens * groups * experts_per_group,
+                 [&](int index) { top_group[index] = 0; });
 }
 
 extern "C" void deepseek_moe_expand_to_fused_f32(float *expanded,
