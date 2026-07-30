@@ -73,10 +73,16 @@ FORBIDDEN_PATTERNS = [
     re.compile(r"\bMAMULB(\.ACC)?\b"),
 ]
 
-TEPL_BSTART = re.compile(
-    r"^\s*BSTART\.TEPL\b.*",
-    re.MULTILINE,
-)
+TILE_BSTART = re.compile(r"^\s*BSTART\.([A-Z][A-Z0-9.]*)\b.*", re.MULTILINE)
+NON_TEPL_TILE_MNEMONICS = {
+    "TLOAD", "TSTORE", "TMOV", "TPREFETCH",
+    "MGATHER", "MGATHER.MASK", "MGATHER.CAS",
+    "MSCATTER", "MSCATTER.MASK",
+    "TMATMUL", "TMATMUL.BIAS", "TMATMUL.ACC",
+    "TMATMULMX", "TMATMULMX.BIAS", "TMATMULMX.ACC",
+    "TGEMV", "TGEMV.BIAS", "TGEMV.ACC",
+    "TGEMVMX", "TGEMVMX.BIAS", "TGEMVMX.ACC", "ACCCVT",
+}
 
 
 def check_file(path: Path) -> list[str]:
@@ -90,7 +96,11 @@ def check_file(path: Path) -> list[str]:
             f"BSTART.(MSEQ|MPAR|VSEQ|VPAR) with B.TEXT/B.DIM): {path}"
         )
     if path.stem in DEEPSEEK_TILE_KERNELS:
-        starts = list(TEPL_BSTART.finditer(text))
+        starts = [
+            match
+            for match in TILE_BSTART.finditer(text)
+            if match.group(1) not in NON_TEPL_TILE_MNEMONICS
+        ]
         if not starts:
             errors.append(f"missing PTO TEPL compute block: {path}")
         for start in starts:

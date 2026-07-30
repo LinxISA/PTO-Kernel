@@ -3,6 +3,8 @@ project(PTOKernel LANGUAGES CXX)
 
 option(PTO_ENABLE_TESTS "Enable PTO-Kernel local tests" ON)
 option(PTO_ENABLE_LINX_CROSS "Enable Linx cross asm contract checks" OFF)
+option(PTO_ENABLE_LINX_MIXED_TILE_SIMT
+  "Enable experimental CUDA-style mixed Tile/SIMT launches in Linx cross checks" OFF)
 set(PTO_BENCHMARK_WORKBOOK "" CACHE FILEPATH
   "Explicit benchmark workbook used by the manifest validation test")
 set(PTO_SPEC_ROOT "" CACHE PATH
@@ -101,6 +103,11 @@ if(PTO_ENABLE_TESTS)
 endif()
 
 if(PTO_ENABLE_LINX_CROSS)
+  if(PTO_ENABLE_LINX_MIXED_TILE_SIMT)
+    set(PTO_LINX_MIXED_TILE_SIMT 1)
+  else()
+    set(PTO_LINX_MIXED_TILE_SIMT 0)
+  endif()
   set(PTO_CLANGXX_DEFAULT
     "${PTO_LINXISA_ROOT}/compiler/llvm/build-linxisa-clang/bin/clang++")
   if(EXISTS "${PTO_CLANGXX_DEFAULT}")
@@ -135,7 +142,7 @@ if(PTO_ENABLE_LINX_CROSS)
               -target linx64-linx-none-elf
               -O2
               -S
-              -DPTO_USE_MIXED_TILE_SIMT=1
+              -DPTO_USE_MIXED_TILE_SIMT=${PTO_LINX_MIXED_TILE_SIMT}
               -ffreestanding
               -fno-builtin
               -fno-stack-protector
