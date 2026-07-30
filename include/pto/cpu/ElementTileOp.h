@@ -338,20 +338,5 @@ namespace pto {
         }
     }
 
-    template <typename tile_shape>
-    PTO_INTERNAL void TADDC_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1, tile_shape &src2) {
-        unsigned row = dst.GetValidRow();
-        unsigned col = dst.GetValidCol();
-        ElementTileOpWithCarry_Impl<tile_shape, ElementOp::OP_ADDC>(dst.data(), src0.data(), src1.data(), src2.data(),
-                                                                    row, col);
-    }
-
-    template <typename tile_shape>
-    PTO_INTERNAL void TSUBC_IMPL(tile_shape &dst, tile_shape &src0, tile_shape &src1, tile_shape &src2) {
-        unsigned row = dst.GetValidRow();
-        unsigned col = dst.GetValidCol();
-        ElementTileOpWithCarry_Impl<tile_shape, ElementOp::OP_SUBC>(dst.data(), src0.data(), src1.data(), src2.data(),
-                                                                    row, col);
-    }
 }
 #endif

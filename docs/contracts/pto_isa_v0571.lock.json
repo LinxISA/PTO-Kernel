@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "source": {
+    "repository": "https://github.com/PTO-ISA/pto-spec.git",
+    "commit": "b30ed3df4f1a7fd0c2d19b02a90b049cb452fd87",
+    "catalog": "spec/catalog/tile-operations.json",
+    "catalog_sha256": "2a49616fbbd34ee4ff00b971d56de6dd7b8c1698fa7312db0b20b6119965bc26"
+  },
+  "profile": "0.57.1",
+  "operation_count": 120,
+  "family_counts": {
+    "TEPL": 98,
+    "TMA": 9,
+    "CUBE": 13
+  }
+}

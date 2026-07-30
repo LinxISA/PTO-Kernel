@@ -31,7 +31,8 @@ enum : unsigned {
 
 constexpr unsigned kTileDTypeInt32 = 17u;
 
-constexpr unsigned make_tma_arg(unsigned format, unsigned pad = kTMAPadNull) {
+constexpr unsigned make_tma_attributes(unsigned format,
+                                       unsigned pad = kTMAPadNull) {
   return ((pad & 0x3u) << 3u) | (format & 0x7u);
 }
 
@@ -76,7 +77,7 @@ constexpr long long effectiveStrideBytes() {
   return static_cast<long long>(effectiveLB0<SizeCode, LB0>() * sizeof(int32_t));
 }
 
-template <unsigned SizeCode, unsigned Arg = 0, unsigned LB0 = 0,
+template <unsigned SizeCode, unsigned Attributes = 0, unsigned LB0 = 0,
           unsigned LB1 = 0, unsigned LB2 = 0>
 PTO_LINX_ALWAYS_INLINE TileI32 tload(const void *base) {
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
@@ -86,11 +87,11 @@ PTO_LINX_ALWAYS_INLINE TileI32 tload(const void *base) {
   constexpr unsigned Dim2 = effectiveLB2<SizeCode, LB0, LB2>();
   static_assert(Dim2 >= Dim0, "physical columns must cover valid columns");
   constexpr long long Stride = effectiveStrideBytes<SizeCode, LB0>();
-  return __builtin_linx_tile_tload(base, SizeCode, kTileDTypeInt32, Arg, Dim0,
+  return __builtin_linx_tile_tload(base, SizeCode, kTileDTypeInt32, Attributes, Dim0,
                                    Dim1, Dim2, Stride);
 }
 
-template <unsigned SizeCode, unsigned Arg = 0, unsigned LB0 = 0,
+template <unsigned SizeCode, unsigned Attributes = 0, unsigned LB0 = 0,
           unsigned LB1 = 0, unsigned LB2 = 0>
 PTO_LINX_ALWAYS_INLINE void tstore(void *base, TileI32 tile) {
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
@@ -100,34 +101,18 @@ PTO_LINX_ALWAYS_INLINE void tstore(void *base, TileI32 tile) {
   constexpr unsigned Dim2 = effectiveLB2<SizeCode, LB0, LB2>();
   static_assert(Dim2 >= Dim0, "physical columns must cover valid columns");
   constexpr long long Stride = effectiveStrideBytes<SizeCode, LB0>();
-  __builtin_linx_tile_tstore(base, tile, SizeCode, kTileDTypeInt32, Arg, Dim0,
+  __builtin_linx_tile_tstore(base, tile, SizeCode, kTileDTypeInt32, Attributes, Dim0,
                              Dim1, Dim2, Stride);
 }
 
 template <unsigned M, unsigned N, unsigned K>
-PTO_LINX_ALWAYS_INLINE TileI32 mamulb(TileI32 lhs, TileI32 rhs) {
-  return __builtin_linx_cube_mamulb(lhs, rhs, M, N, K);
-}
-
-template <unsigned M, unsigned N, unsigned K>
 PTO_LINX_ALWAYS_INLINE TileI32 tmatmul(TileI32 lhs, TileI32 rhs) {
-  return mamulb<M, N, K>(lhs, rhs);
+  return __builtin_linx_cube_mamulb(lhs, rhs, M, N, K);
 }
 
 template <unsigned M, unsigned N, unsigned K>
 PTO_LINX_ALWAYS_INLINE TileI32 tmatmul_acc(TileI32 acc, TileI32 lhs, TileI32 rhs) {
   return __builtin_linx_cube_mamulb_acc(acc, lhs, rhs, M, N, K);
-}
-
-template <unsigned M, unsigned N, unsigned K>
-PTO_LINX_ALWAYS_INLINE TileI32 tmatmul_mx(TileI32 lhs, TileI32 rhs) {
-#if defined(PTO_LINX_ENABLE_TMATMUL_MX) && PTO_LINX_ENABLE_TMATMUL_MX
-  return mamulb<M, N, K>(lhs, rhs);
-#else
-  (void)lhs;
-  (void)rhs;
-  __builtin_trap();
-#endif
 }
 
 template <unsigned SizeCode>

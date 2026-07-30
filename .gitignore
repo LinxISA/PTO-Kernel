@@ -4,6 +4,14 @@ build-*/
 
 # Generated artifacts
 generated/
+!docs/contracts/generated/
+!docs/contracts/generated/pto_isa_v0571_surface.json
+!include/common/generated/
+!include/common/generated/pto_isa_v0571.hpp
+!include/pto/common/generated/
+!include/pto/common/generated/pto_isa_v0571_api.inc
+!tests/generated/
+!tests/generated/pto_isa_v0571_calls.inc
 
 # Python cache
 __pycache__/

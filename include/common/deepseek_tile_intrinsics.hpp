@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-namespace deepseek::pto57 {
+namespace deepseek::pto0571 {
 
 constexpr int kRows = 32;
 constexpr int kCols = 32;
@@ -179,11 +179,11 @@ inline __attribute__((always_inline)) void sinkhorn_step(VecTile<float> &dst,
   VecTile<float> column_normalized_t;
   pto::TEXP(positive, src);
   row_normalize(row_normalized, positive);
-  pto::TTRANSPOSE(transposed, row_normalized);
+  pto::TTRANS(transposed, row_normalized);
   row_normalize(column_normalized_t, transposed);
-  pto::TTRANSPOSE(dst, column_normalized_t);
+  pto::TTRANS(dst, column_normalized_t);
 }
 
-} // namespace deepseek::pto57
+} // namespace deepseek::pto0571
 
 #endif // PTO_COMMON_DEEPSEEK_TILE_INTRINSICS_HPP

@@ -5,7 +5,7 @@ extern "C" void deepseek_engram_hash_i32(int *indices,
                                           const int64_t *token_ids, int tokens,
                                           int hashes, int buckets,
                                           uint64_t seed) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)hashes;
   VecTile<uint32_t> input;
@@ -31,7 +31,7 @@ extern "C" void deepseek_engram_fused_weight_f32(
     float *output, const float *table, const int *indices,
     const float *hash_weights, int tokens, int hashes, int buckets,
     int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)hashes;
   (void)buckets;
@@ -54,7 +54,7 @@ extern "C" void deepseek_engram_fused_weight_f32(
 extern "C" void deepseek_engram_gate_fwd_f32(
     float *output, float *normalized, const float *input, const float *weight,
     const float *bias, int tokens, int hidden, float eps) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)hidden;
   VecTile<float> input_tile;
@@ -81,7 +81,7 @@ extern "C" void deepseek_engram_gate_bwd_f32(
     float *grad_input, float *grad_weight, float *grad_bias,
     const float *grad_output, const float *input, const float *weight,
     int tokens, int hidden, float eps) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)hidden;
   VecTile<float> grad;
@@ -111,7 +111,7 @@ extern "C" void deepseek_engram_grad_w_reduce_f32(float *reduced,
                                                    const float *partial,
                                                    int parts, int rows,
                                                    int cols) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)parts;
   (void)rows;
   (void)cols;

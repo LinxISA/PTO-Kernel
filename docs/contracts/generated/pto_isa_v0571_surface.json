@@ -1,0 +1,2633 @@
+{
+  "deleted_names": [
+    "TADDC",
+    "TADDSC",
+    "TFMA",
+    "TFMOD",
+    "TFMODS",
+    "TLRELU",
+    "TRANDOM",
+    "TSUBC",
+    "TSUBSC"
+  ],
+  "family_counts": {
+    "CUBE": 13,
+    "TEPL": 98,
+    "TMA": 9
+  },
+  "operation_count": 120,
+  "operations": [
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 0,
+      "mode": 0,
+      "name": "TADD",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x000"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 1,
+      "mode": 0,
+      "name": "TSUB",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x001"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 2,
+      "mode": 0,
+      "name": "TMUL",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x002"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 11,
+      "mode": 0,
+      "name": "TMAX",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x00B"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 12,
+      "mode": 0,
+      "name": "TMIN",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x00C"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 6,
+      "mode": 0,
+      "name": "TAND",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x006"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 7,
+      "mode": 0,
+      "name": "TOR",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x007"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 8,
+      "mode": 0,
+      "name": "TXOR",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x008"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 9,
+      "mode": 0,
+      "name": "TSHL",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x009"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 10,
+      "mode": 0,
+      "name": "TSHR",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x00A"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 13,
+      "mode": 0,
+      "name": "TCMP",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        },
+        {
+          "field": "comparison",
+          "role": "comparison"
+        }
+      ],
+      "selector": "0x00D"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 26,
+      "mode": 0,
+      "name": "TSEL",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "mask"
+        },
+        {
+          "field": "source1",
+          "role": "source-true"
+        },
+        {
+          "field": "source2",
+          "role": "source-false"
+        }
+      ],
+      "selector": "0x01A"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 15,
+      "mode": 0,
+      "name": "TABS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x00F"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 16,
+      "mode": 0,
+      "name": "TNOT",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x010"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 17,
+      "mode": 0,
+      "name": "TNEG",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x011"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 23,
+      "mode": 0,
+      "name": "TRELU",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x017"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 14,
+      "mode": 0,
+      "name": "TPRELU",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "negative-slope"
+        }
+      ],
+      "selector": "0x00E"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 3,
+      "mode": 0,
+      "name": "TDIV",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x003"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 4,
+      "mode": 0,
+      "name": "TREM",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x004"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 21,
+      "mode": 0,
+      "name": "TSQRT",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x015"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 19,
+      "mode": 0,
+      "name": "TLOG",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x013"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 20,
+      "mode": 0,
+      "name": "TRECIP",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x014"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 18,
+      "mode": 0,
+      "name": "TEXP",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x012"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 22,
+      "mode": 0,
+      "name": "TRSQRT",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x016"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 0,
+      "mode": 1,
+      "name": "TADDS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        }
+      ],
+      "selector": "0x020"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 15,
+      "mode": 1,
+      "name": "TAXPY",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        }
+      ],
+      "selector": "0x02F"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 1,
+      "mode": 1,
+      "name": "TSUBS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        }
+      ],
+      "selector": "0x021"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 2,
+      "mode": 1,
+      "name": "TMULS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        }
+      ],
+      "selector": "0x022"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 3,
+      "mode": 1,
+      "name": "TDIVS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        }
+      ],
+      "selector": "0x023"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 12,
+      "mode": 1,
+      "name": "TMINS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        }
+      ],
+      "selector": "0x02C"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 11,
+      "mode": 1,
+      "name": "TMAXS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        }
+      ],
+      "selector": "0x02B"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 4,
+      "mode": 1,
+      "name": "TREMS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        }
+      ],
+      "selector": "0x024"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 6,
+      "mode": 1,
+      "name": "TANDS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        }
+      ],
+      "selector": "0x026"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 7,
+      "mode": 1,
+      "name": "TORS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        }
+      ],
+      "selector": "0x027"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 8,
+      "mode": 1,
+      "name": "TXORS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        }
+      ],
+      "selector": "0x028"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 13,
+      "mode": 1,
+      "name": "TCMPS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        },
+        {
+          "field": "comparison",
+          "role": "comparison"
+        }
+      ],
+      "selector": "0x02D"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 26,
+      "mode": 1,
+      "name": "TSELS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "mask"
+        },
+        {
+          "field": "source1",
+          "role": "source-true"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar-false"
+        }
+      ],
+      "selector": "0x03A"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 9,
+      "mode": 1,
+      "name": "TSHLS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        }
+      ],
+      "selector": "0x029"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 10,
+      "mode": 1,
+      "name": "TSHRS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        }
+      ],
+      "selector": "0x02A"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 0,
+      "mode": 2,
+      "name": "TROWSUM",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x040"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 3,
+      "mode": 2,
+      "name": "TROWPROD",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x043"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 1,
+      "mode": 2,
+      "name": "TROWMAX",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x041"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 2,
+      "mode": 2,
+      "name": "TROWMIN",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x042"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 12,
+      "mode": 2,
+      "name": "TROWARGMAX",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x04C"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 13,
+      "mode": 2,
+      "name": "TROWARGMIN",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x04D"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 16,
+      "mode": 2,
+      "name": "TCOLSUM",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x050"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 19,
+      "mode": 2,
+      "name": "TCOLPROD",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x053"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 17,
+      "mode": 2,
+      "name": "TCOLMAX",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x051"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 18,
+      "mode": 2,
+      "name": "TCOLMIN",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x052"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 28,
+      "mode": 2,
+      "name": "TCOLARGMAX",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x05C"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 29,
+      "mode": 2,
+      "name": "TCOLARGMIN",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x05D"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 4,
+      "mode": 2,
+      "name": "TROWEXPAND",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x044"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 5,
+      "mode": 2,
+      "name": "TROWEXPANDADD",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x045"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 6,
+      "mode": 2,
+      "name": "TROWEXPANDSUB",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x046"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 7,
+      "mode": 2,
+      "name": "TROWEXPANDMUL",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x047"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 8,
+      "mode": 2,
+      "name": "TROWEXPANDDIV",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x048"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 9,
+      "mode": 2,
+      "name": "TROWEXPANDMAX",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x049"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 10,
+      "mode": 2,
+      "name": "TROWEXPANDMIN",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x04A"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 11,
+      "mode": 2,
+      "name": "TROWEXPANDEXPDIF",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x04B"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 20,
+      "mode": 2,
+      "name": "TCOLEXPAND",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x054"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 21,
+      "mode": 2,
+      "name": "TCOLEXPANDADD",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x055"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 22,
+      "mode": 2,
+      "name": "TCOLEXPANDSUB",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x056"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 23,
+      "mode": 2,
+      "name": "TCOLEXPANDMUL",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x057"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 24,
+      "mode": 2,
+      "name": "TCOLEXPANDDIV",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x058"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 25,
+      "mode": 2,
+      "name": "TCOLEXPANDMAX",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x059"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 26,
+      "mode": 2,
+      "name": "TCOLEXPANDMIN",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x05A"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 27,
+      "mode": 2,
+      "name": "TCOLEXPANDEXPDIF",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "broadcast-source"
+        }
+      ],
+      "selector": "0x05B"
+    },
+    {
+      "command_mnemonic": "BSTART.TMATMUL",
+      "family": "CUBE",
+      "function": 0,
+      "name": "TMATMUL",
+      "operands": [
+        {
+          "field": "source0",
+          "role": "left"
+        },
+        {
+          "field": "source1",
+          "role": "right"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TMATMUL.BIAS",
+      "family": "CUBE",
+      "function": 1,
+      "name": "TMATMUL_BIAS",
+      "operands": [
+        {
+          "field": "source0",
+          "role": "left"
+        },
+        {
+          "field": "source1",
+          "role": "right"
+        },
+        {
+          "field": "source2",
+          "role": "bias"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TMATMUL.ACC",
+      "family": "CUBE",
+      "function": 2,
+      "name": "TMATMUL_ACC",
+      "operands": [
+        {
+          "field": "source0",
+          "role": "left"
+        },
+        {
+          "field": "source1",
+          "role": "right"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TMATMULMX",
+      "family": "CUBE",
+      "function": 4,
+      "name": "TMATMUL_MX",
+      "operands": [
+        {
+          "field": "source0",
+          "role": "left"
+        },
+        {
+          "field": "source1",
+          "role": "right"
+        },
+        {
+          "field": "source2",
+          "role": "row-scale"
+        },
+        {
+          "field": "source3",
+          "role": "column-scale"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TMATMULMX.BIAS",
+      "family": "CUBE",
+      "function": 5,
+      "name": "TMATMUL_MX_BIAS",
+      "operands": [
+        {
+          "field": "source0",
+          "role": "left"
+        },
+        {
+          "field": "source1",
+          "role": "right"
+        },
+        {
+          "field": "source2",
+          "role": "row-scale"
+        },
+        {
+          "field": "source3",
+          "role": "column-scale"
+        },
+        {
+          "field": "source4",
+          "role": "bias"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TMATMULMX.ACC",
+      "family": "CUBE",
+      "function": 6,
+      "name": "TMATMUL_MX_ACC",
+      "operands": [
+        {
+          "field": "source0",
+          "role": "left"
+        },
+        {
+          "field": "source1",
+          "role": "right"
+        },
+        {
+          "field": "source2",
+          "role": "row-scale"
+        },
+        {
+          "field": "source3",
+          "role": "column-scale"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.ACCCVT",
+      "family": "CUBE",
+      "function": 8,
+      "name": "ACCCVT",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TGEMV",
+      "family": "CUBE",
+      "function": 16,
+      "name": "TGEMV",
+      "operands": [
+        {
+          "field": "source0",
+          "role": "matrix"
+        },
+        {
+          "field": "source1",
+          "role": "vector"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TGEMV.BIAS",
+      "family": "CUBE",
+      "function": 17,
+      "name": "TGEMV_BIAS",
+      "operands": [
+        {
+          "field": "source0",
+          "role": "matrix"
+        },
+        {
+          "field": "source1",
+          "role": "vector"
+        },
+        {
+          "field": "source2",
+          "role": "bias"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TGEMV.ACC",
+      "family": "CUBE",
+      "function": 18,
+      "name": "TGEMV_ACC",
+      "operands": [
+        {
+          "field": "source0",
+          "role": "matrix"
+        },
+        {
+          "field": "source1",
+          "role": "vector"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TGEMVMX",
+      "family": "CUBE",
+      "function": 20,
+      "name": "TGEMV_MX",
+      "operands": [
+        {
+          "field": "source0",
+          "role": "matrix"
+        },
+        {
+          "field": "source1",
+          "role": "vector"
+        },
+        {
+          "field": "source2",
+          "role": "row-scale"
+        },
+        {
+          "field": "source3",
+          "role": "column-scale"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TGEMVMX.BIAS",
+      "family": "CUBE",
+      "function": 21,
+      "name": "TGEMV_MX_BIAS",
+      "operands": [
+        {
+          "field": "source0",
+          "role": "matrix"
+        },
+        {
+          "field": "source1",
+          "role": "vector"
+        },
+        {
+          "field": "source2",
+          "role": "row-scale"
+        },
+        {
+          "field": "source3",
+          "role": "column-scale"
+        },
+        {
+          "field": "source4",
+          "role": "bias"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TGEMVMX.ACC",
+      "family": "CUBE",
+      "function": 22,
+      "name": "TGEMV_MX_ACC",
+      "operands": [
+        {
+          "field": "source0",
+          "role": "matrix"
+        },
+        {
+          "field": "source1",
+          "role": "vector"
+        },
+        {
+          "field": "source2",
+          "role": "row-scale"
+        },
+        {
+          "field": "source3",
+          "role": "column-scale"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TLOAD",
+      "family": "TMA",
+      "function": 0,
+      "name": "TLOAD",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "address",
+          "role": "base-address"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TSTORE",
+      "family": "TMA",
+      "function": 1,
+      "name": "TSTORE",
+      "operands": [
+        {
+          "field": "address",
+          "role": "base-address"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TPREFETCH",
+      "family": "TMA",
+      "function": 3,
+      "name": "TPREFETCH",
+      "operands": [
+        {
+          "field": "address",
+          "role": "base-address"
+        },
+        {
+          "field": "byte_count",
+          "role": "byte-count"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.MGATHER",
+      "family": "TMA",
+      "function": 4,
+      "name": "MGATHER",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "address",
+          "role": "base-address"
+        },
+        {
+          "field": "source0",
+          "role": "indices"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.MSCATTER",
+      "family": "TMA",
+      "function": 5,
+      "name": "MSCATTER",
+      "operands": [
+        {
+          "field": "address",
+          "role": "base-address"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "indices"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.MGATHER.MASK",
+      "family": "TMA",
+      "function": 6,
+      "name": "MGATHER_MASK",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "address",
+          "role": "base-address"
+        },
+        {
+          "field": "source0",
+          "role": "indices"
+        },
+        {
+          "field": "source1",
+          "role": "mask"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.MSCATTER.MASK",
+      "family": "TMA",
+      "function": 7,
+      "name": "MSCATTER_MASK",
+      "operands": [
+        {
+          "field": "address",
+          "role": "base-address"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "indices"
+        },
+        {
+          "field": "source2",
+          "role": "mask"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.MGATHER.CAS",
+      "family": "TMA",
+      "function": 8,
+      "name": "MGATHER_CAS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "address",
+          "role": "base-address"
+        },
+        {
+          "field": "source0",
+          "role": "indices"
+        },
+        {
+          "field": "source1",
+          "role": "expected"
+        },
+        {
+          "field": "source2",
+          "role": "replacement"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 27,
+      "mode": 1,
+      "name": "TEXPANDS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "scalar0",
+          "role": "scalar"
+        }
+      ],
+      "selector": "0x03B"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 6,
+      "mode": 3,
+      "name": "TCI",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "scalar0",
+          "role": "start"
+        },
+        {
+          "field": "flag0",
+          "role": "descending"
+        }
+      ],
+      "selector": "0x066"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 7,
+      "mode": 3,
+      "name": "TTRI",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "flag0",
+          "role": "upper"
+        },
+        {
+          "field": "diagonal",
+          "role": "diagonal"
+        }
+      ],
+      "selector": "0x067"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 5,
+      "mode": 3,
+      "name": "TFILLPAD",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "padding"
+        }
+      ],
+      "selector": "0x065"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 27,
+      "mode": 0,
+      "name": "TCVT",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x01B"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 10,
+      "mode": 3,
+      "name": "TQUANT",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scale"
+        },
+        {
+          "field": "scalar1",
+          "role": "zero-point"
+        }
+      ],
+      "selector": "0x06A"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 11,
+      "mode": 3,
+      "name": "TDEQUANT",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "scalar0",
+          "role": "scale"
+        },
+        {
+          "field": "scalar1",
+          "role": "zero-point"
+        }
+      ],
+      "selector": "0x06B"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 2,
+      "mode": 3,
+      "name": "TEXTRACT",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "natural0",
+          "role": "row-offset"
+        },
+        {
+          "field": "natural1",
+          "role": "column-offset"
+        }
+      ],
+      "selector": "0x062"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 3,
+      "mode": 3,
+      "name": "TINSERT",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "natural0",
+          "role": "row-offset"
+        },
+        {
+          "field": "natural1",
+          "role": "column-offset"
+        }
+      ],
+      "selector": "0x063"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 15,
+      "mode": 3,
+      "name": "TGATHER",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "indices"
+        }
+      ],
+      "selector": "0x06F"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 16,
+      "mode": 3,
+      "name": "TSCATTER",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "indices"
+        }
+      ],
+      "selector": "0x070"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 0,
+      "mode": 3,
+      "name": "TCONCAT",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        },
+        {
+          "field": "axis",
+          "role": "axis"
+        }
+      ],
+      "selector": "0x060"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 14,
+      "mode": 3,
+      "name": "TTRANS",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x06E"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 4,
+      "mode": 3,
+      "name": "TIMG2COL",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "positive0",
+          "role": "kernel-rows"
+        },
+        {
+          "field": "positive1",
+          "role": "kernel-columns"
+        },
+        {
+          "field": "positive2",
+          "role": "stride-rows"
+        },
+        {
+          "field": "positive3",
+          "role": "stride-columns"
+        },
+        {
+          "field": "natural0",
+          "role": "pad-rows"
+        },
+        {
+          "field": "natural1",
+          "role": "pad-columns"
+        },
+        {
+          "field": "scalar0",
+          "role": "padding"
+        }
+      ],
+      "selector": "0x064"
+    },
+    {
+      "command_mnemonic": "BSTART.TMOV",
+      "family": "TMA",
+      "function": 2,
+      "name": "TMOV",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ]
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 1,
+      "mode": 3,
+      "name": "TGATHERB",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "byte-offsets"
+        }
+      ],
+      "selector": "0x061"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 24,
+      "mode": 3,
+      "name": "TDEINTERLEAVE",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination-even"
+        },
+        {
+          "field": "destination1",
+          "role": "destination-odd"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x078"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 25,
+      "mode": 3,
+      "name": "TINTERLEAVE",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x079"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 23,
+      "mode": 3,
+      "name": "TRESHAPE",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x077"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 12,
+      "mode": 3,
+      "name": "TSORT",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "destination1",
+          "role": "original-indices-u32"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "flag0",
+          "role": "descending"
+        }
+      ],
+      "selector": "0x06C"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 13,
+      "mode": 3,
+      "name": "TMRGSORT",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        },
+        {
+          "field": "flag0",
+          "role": "descending"
+        }
+      ],
+      "selector": "0x06D"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 8,
+      "mode": 3,
+      "name": "THISTOGRAM",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        },
+        {
+          "field": "source1",
+          "role": "indices"
+        },
+        {
+          "field": "selected_byte",
+          "role": "selected-byte"
+        }
+      ],
+      "selector": "0x068"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 26,
+      "mode": 3,
+      "name": "TPUSH",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x07A"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 27,
+      "mode": 3,
+      "name": "TPOP",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source"
+        }
+      ],
+      "selector": "0x07B"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 28,
+      "mode": 3,
+      "name": "TALLOC",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "byte_count",
+          "role": "capacity-bytes"
+        },
+        {
+          "field": "positive0",
+          "role": "rows"
+        },
+        {
+          "field": "positive1",
+          "role": "columns"
+        },
+        {
+          "field": "natural0",
+          "role": "valid-rows"
+        },
+        {
+          "field": "natural1",
+          "role": "valid-columns"
+        },
+        {
+          "field": "scalar0",
+          "role": "data-type-code"
+        },
+        {
+          "field": "flag0",
+          "role": "implementation-defined-layout"
+        }
+      ],
+      "selector": "0x07C"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 29,
+      "mode": 3,
+      "name": "TFREE",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        }
+      ],
+      "selector": "0x07D"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 17,
+      "mode": 3,
+      "name": "TPARTADD",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x071"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 18,
+      "mode": 3,
+      "name": "TPARTMUL",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x072"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 19,
+      "mode": 3,
+      "name": "TPARTMAX",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x073"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 20,
+      "mode": 3,
+      "name": "TPARTMIN",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        }
+      ],
+      "selector": "0x074"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 21,
+      "mode": 3,
+      "name": "TPARTARGMAX",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "destination1",
+          "role": "destination-indices"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        },
+        {
+          "field": "source2",
+          "role": "left-indices"
+        },
+        {
+          "field": "source3",
+          "role": "right-indices"
+        }
+      ],
+      "selector": "0x075"
+    },
+    {
+      "command_mnemonic": "BSTART.TEPL",
+      "family": "TEPL",
+      "function": 22,
+      "mode": 3,
+      "name": "TPARTARGMIN",
+      "operands": [
+        {
+          "field": "destination0",
+          "role": "destination"
+        },
+        {
+          "field": "destination1",
+          "role": "destination-indices"
+        },
+        {
+          "field": "source0",
+          "role": "source-left"
+        },
+        {
+          "field": "source1",
+          "role": "source-right"
+        },
+        {
+          "field": "source2",
+          "role": "left-indices"
+        },
+        {
+          "field": "source3",
+          "role": "right-indices"
+        }
+      ],
+      "selector": "0x076"
+    }
+  ],
+  "profile": "0.57.1",
+  "schema_version": 1,
+  "source": {
+    "catalog": "spec/catalog/tile-operations.json",
+    "catalog_sha256": "2a49616fbbd34ee4ff00b971d56de6dd7b8c1698fa7312db0b20b6119965bc26",
+    "commit": "b30ed3df4f1a7fd0c2d19b02a90b049cb452fd87",
+    "repository": "https://github.com/PTO-ISA/pto-spec.git"
+  }
+}

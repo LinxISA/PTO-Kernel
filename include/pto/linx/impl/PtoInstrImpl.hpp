@@ -17,7 +17,7 @@ template <typename... Args>
 inline void Unsupported(const char *op_name) {
   (void)op_name;
   static_assert(dependent_false<Args...>::value,
-                "PTO Linx strict-v0.57: unsupported PTO op for __LINXISA__ backend");
+                "PTO Linx strict-0.57.1: unsupported PTO op for __LINXISA__ backend");
 }
 
 } // namespace impl
@@ -86,7 +86,7 @@ inline void TMAX_IMPL(Dst &dst, Src0 &src0, Src1 &src1) {
   TMAX(dst, src0, src1);
 }
 
-template <typename Dst, typename Src>
+template <typename Dst>
 inline void TEXPANDS_IMPL(Dst &dst, typename Dst::DType scalar) {
   TEXPANDS(dst, scalar);
 }
@@ -126,9 +126,9 @@ inline void TMULS_IMPL(Dst &dst, Src &src, typename Src::DType scalar) {
   TMULS(dst, src, scalar);
 }
 
-template <typename Dst, typename Scalar, typename Src>
-inline void TDIVS_IMPL(Dst &dst, Scalar, Src &src) {
-  TRECIP(dst, src);
+template <typename Dst, typename Src, typename Scalar>
+inline void TDIVS_IMPL(Dst &dst, Src &src, Scalar scalar) {
+  TDIVS(dst, src, scalar);
 }
 
 template <typename... Args>

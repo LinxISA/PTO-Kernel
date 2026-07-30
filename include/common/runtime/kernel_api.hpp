@@ -151,7 +151,6 @@ struct pto_layout_config {
 
 extern "C" {
 void tload_store_i32(int *src_ptr, int *dst_ptr);
-void mamulb_i32(int *lhs_ptr, int *rhs_ptr, int *dst_ptr);
 void tmatmul_acc_i32(int *lhs_ptr, int *rhs_ptr, int *dst_ptr);
 void gemm_i32(int *lhs_ptr, int *rhs_ptr, int *dst_ptr);
 void gemm_basic_f32(float *lhs_ptr, float *rhs_ptr, float *dst_ptr);
@@ -243,11 +242,6 @@ inline int cfg_n(const pto_elementwise_config *cfg, int fallback = 1) {
 inline void pto_tload_store(int *dst, int *src,
                             const pto_memory_config * = nullptr) {
   tload_store_i32(src, dst);
-}
-
-inline void pto_mamulb(int *dst, int *lhs, int *rhs,
-                       const pto_matmul_config * = nullptr) {
-  mamulb_i32(lhs, rhs, dst);
 }
 
 inline void pto_tmatmul_acc(int *dst, int *lhs, int *rhs,
@@ -532,7 +526,6 @@ using pto::kernels::pto_gemm_performance;
 using pto::kernels::pto_gemm_scaled;
 using pto::kernels::pto_gqa;
 using pto::kernels::pto_layernorm;
-using pto::kernels::pto_mamulb;
 using pto::kernels::pto_mla_attention;
 using pto::kernels::pto_permute_nhwc_nchw;
 using pto::kernels::pto_relu;

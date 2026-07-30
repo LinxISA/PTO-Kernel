@@ -248,13 +248,6 @@ namespace pto {
         }
     }
 
-    template <typename tile_shape>
-    PTO_INTERNAL void TLRELU_IMPL(tile_shape &dst, tile_shape &src, typename tile_shape::DType scalar) {
-        unsigned row = dst.GetValidRow();
-        unsigned col = dst.GetValidCol();
-        UnaryTileScalarOpImpl<tile_shape, ElementOp::OP_LRELU>(dst.data(), src.data(), scalar, row, col);
-    }
-
     template<typename tile_shape, ElementOp op>
     void ElementTileScalarOpWithCarry_Impl(typename tile_shape::TileDType dst, typename tile_shape::TileDType src0,
                                            typename tile_shape::DType scalar, typename tile_shape::TileDType src1,
@@ -300,22 +293,5 @@ namespace pto {
         }
     }
 
-    template <typename tile_shape>
-    PTO_INTERNAL void TADDSC_IMPL(tile_shape &dst, tile_shape &src0, typename tile_shape::DType scalar,
-                                  tile_shape &src1) {
-        unsigned row = dst.GetValidRow();
-        unsigned col = dst.GetValidCol();
-        ElementTileScalarOpWithCarry_Impl<tile_shape, ElementOp::OP_ADDCS>(dst.data(), src0.data(), scalar, src1.data(),
-                                                                           row, col);
-    }
-
-    template <typename tile_shape>
-    PTO_INTERNAL void TSUBSC_IMPL(tile_shape &dst, tile_shape &src0, typename tile_shape::DType scalar,
-                                  tile_shape &src1) {
-        unsigned row = dst.GetValidRow();
-        unsigned col = dst.GetValidCol();
-        ElementTileScalarOpWithCarry_Impl<tile_shape, ElementOp::OP_SUBCS>(dst.data(), src0.data(), scalar, src1.data(),
-                                                                           row, col);
-    }
 }
 #endif

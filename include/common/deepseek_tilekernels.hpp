@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-// C entry points for the PTO v0.57 ports of deepseek-ai/TileKernels.
+// C entry points for the PTO 0.57.1 ports of deepseek-ai/TileKernels.
 //
 // The physical carrier is a 32x32 row-major tile. Public dimensions are
 // operative: kernels issue full carriers plus rectangular tail tiles using

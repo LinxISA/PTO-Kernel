@@ -4,7 +4,7 @@
 extern "C" void deepseek_quant_per_token_i8(int8_t *dst, float *scales,
                                             const float *src, int tokens,
                                             int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   for_each_tile_2d(
       tokens, hidden, [&](int row, int col, int valid_rows, int valid_cols) {
         VecTile<float> input(valid_rows, valid_cols);
@@ -20,7 +20,7 @@ extern "C" void deepseek_quant_per_token_i8(int8_t *dst, float *scales,
 extern "C" void deepseek_quant_per_block_i8(int8_t *dst, float *scales,
                                             const float *src, int count,
                                             int block) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)count;
   (void)block;
   VecTile<float> input;
@@ -36,7 +36,7 @@ extern "C" void deepseek_quant_per_block_lossless_i8(int8_t *dst,
                                                      uint32_t *scale_bits,
                                                      const float *src,
                                                      int count, int block) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)count;
   (void)block;
   VecTile<float> input;
@@ -51,7 +51,7 @@ extern "C" void deepseek_quant_per_block_lossless_i8(int8_t *dst,
 extern "C" void deepseek_quant_per_channel_i8(int8_t *dst, float *scales,
                                               const float *src, int rows,
                                               int cols) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)rows;
   (void)cols;
   VecTile<float> input;
@@ -60,9 +60,9 @@ extern "C" void deepseek_quant_per_channel_i8(int8_t *dst, float *scales,
   VecTile<int8_t> quantized_t;
   VecTile<int8_t> quantized;
   load(input, src);
-  pto::TTRANSPOSE(transposed, input);
+  pto::TTRANS(transposed, input);
   quantize_rows(quantized_t, scale, transposed);
-  pto::TTRANSPOSE(quantized, quantized_t);
+  pto::TTRANS(quantized, quantized_t);
   store(dst, quantized);
   store(scales, scale, 1);
 }
@@ -71,7 +71,7 @@ extern "C" void deepseek_quant_per_channel_transpose_i8(int8_t *dst,
                                                         float *scales,
                                                         const float *src,
                                                         int rows, int cols) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)rows;
   (void)cols;
   VecTile<float> input;
@@ -79,7 +79,7 @@ extern "C" void deepseek_quant_per_channel_transpose_i8(int8_t *dst,
   VecTile<float> scale;
   VecTile<int8_t> quantized;
   load(input, src);
-  pto::TTRANSPOSE(transposed, input);
+  pto::TTRANS(transposed, input);
   quantize_rows(quantized, scale, transposed);
   store(dst, quantized);
   store(scales, scale, 1);
@@ -89,7 +89,7 @@ extern "C" void deepseek_quant_per_channel_fused_i8(int8_t *dst, float *scales,
                                                     const float *lhs,
                                                     const float *rhs, int rows,
                                                     int cols) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)rows;
   (void)cols;
   VecTile<float> left;
@@ -102,9 +102,9 @@ extern "C" void deepseek_quant_per_channel_fused_i8(int8_t *dst, float *scales,
   load(left, lhs);
   load(right, rhs);
   pto::TADD(fused, left, right);
-  pto::TTRANSPOSE(transposed, fused);
+  pto::TTRANS(transposed, fused);
   quantize_rows(quantized_t, scale, transposed);
-  pto::TTRANSPOSE(quantized, quantized_t);
+  pto::TTRANS(quantized, quantized_t);
   store(dst, quantized);
   store(scales, scale, 1);
 }
@@ -112,7 +112,7 @@ extern "C" void deepseek_quant_per_channel_fused_i8(int8_t *dst, float *scales,
 extern "C" void deepseek_quant_cast_back_f32(float *dst, const int8_t *src,
                                              const float *scales, int rows,
                                              int cols, bool per_token) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   for_each_tile_2d(
       rows, cols, [&](int row, int col, int valid_rows, int valid_cols) {
         VecTile<int8_t> quantized(valid_rows, valid_cols);
@@ -136,7 +136,7 @@ extern "C" void deepseek_quant_cast_back_f32(float *dst, const int8_t *src,
 
 extern "C" void deepseek_quant_per_token_e5m6(uint16_t *dst, const float *src,
                                               int count) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)count;
   VecTile<float> input;
   VecTile<uint16_t> output;
@@ -147,7 +147,7 @@ extern "C" void deepseek_quant_per_token_e5m6(uint16_t *dst, const float *src,
 
 extern "C" void deepseek_quant_cast_back_e5m6(float *dst, const uint16_t *src,
                                               int count) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)count;
   VecTile<uint16_t> input;
   VecTile<float> output;
@@ -160,7 +160,7 @@ extern "C" void
 deepseek_quant_swiglu_forward_per_token_i8(int8_t *dst, float *scales,
                                            const float *gate, const float *up,
                                            int tokens, int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)hidden;
   VecTile<float> gate_tile;
@@ -179,7 +179,7 @@ deepseek_quant_swiglu_forward_per_token_i8(int8_t *dst, float *scales,
 extern "C" void deepseek_quant_swiglu_forward_per_channel_transpose_i8(
     int8_t *dst, float *scales, const float *gate, const float *up, int tokens,
     int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)hidden;
   VecTile<float> gate_tile;
@@ -191,7 +191,7 @@ extern "C" void deepseek_quant_swiglu_forward_per_channel_transpose_i8(
   load(gate_tile, gate);
   load(up_tile, up);
   swiglu(activated, gate_tile, up_tile);
-  pto::TTRANSPOSE(transposed, activated);
+  pto::TTRANS(transposed, activated);
   quantize_rows(output, scale, transposed);
   store(dst, output);
   store(scales, scale, 1);
@@ -201,7 +201,7 @@ extern "C" void deepseek_quant_swiglu_backward_per_token_i8(
     int8_t *dgate, int8_t *dup, float *gate_scales, float *up_scales,
     const float *grad, const float *gate, const float *up, int tokens,
     int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)hidden;
   VecTile<float> grad_tile;

@@ -8,7 +8,6 @@ from pathlib import Path
 
 REQUIRED_TILE_KERNELS = {
     "tload_store",
-    "mamulb",
     "tmatmul_acc",
     "gemm",
     "gemm_basic",
@@ -55,8 +54,11 @@ REQUIRED_TILE_KERNELS = {
 DEEPSEEK_TILE_KERNELS = {"engram", "mhc", "moe", "quant", "transpose"}
 
 REQUIRED_PATTERNS = [
-    re.compile(r"\bBSTART\.T(LOAD|STORE|MOV|PREFETCH|MATMUL|MATMUL\.ACC|MATMUL\.BIAS|MATMULMX|MATMULMX\.ACC|MATMULMX\.BIAS)\b"),
-    re.compile(r"\bBSTART\.ACC(CVT)?\b"),
+    re.compile(
+        r"\bBSTART\.(?:TLOAD|TSTORE|TMOV|TPREFETCH|MGATHER(?:\.MASK|\.CAS)?|"
+        r"MSCATTER(?:\.MASK)?|TMATMUL(?:\.ACC|\.BIAS)?|TMATMULMX(?:\.ACC|\.BIAS)?|"
+        r"TGEMV(?:\.ACC|\.BIAS)?|TGEMVMX(?:\.ACC|\.BIAS)?|ACCCVT)\b"
+    ),
 ]
 REQUIRED_VBLOCK_PATTERNS = [
     re.compile(r"\bBSTART\.(MSEQ|MPAR|VSEQ|VPAR)\b"),
@@ -67,11 +69,12 @@ FORBIDDEN_PATTERNS = [
     re.compile(r"(^|[^A-Za-z0-9_.])L\."),
     re.compile(r"\b(set_flag|wait_flag|B\.SET|B\.WAIT)\b"),
     re.compile(r"\bBSTART\.(TMA|CUBE)\b"),
+    re.compile(r"\bB\.ARG\b"),
     re.compile(r"\bMAMULB(\.ACC)?\b"),
 ]
 
 TEPL_BSTART = re.compile(
-    r"^\s*BSTART\.T(?!LOAD\b|STORE\b|MOV\b|PREFETCH\b|MATMUL).*",
+    r"^\s*BSTART\.TEPL\b.*",
     re.MULTILINE,
 )
 

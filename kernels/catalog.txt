@@ -61,7 +61,6 @@ matmul/gemm_performance.cpp
 matmul/gemm_reuse_a_fp16.cpp
 matmul/gemm_reuse_ab_fp16.cpp
 matmul/gemm_reuse_b_fp16.cpp
-matmul/mamulb.cpp
 matmul/matmul_a16w4.cpp
 matmul/matmul_a16w8.cpp
 matmul/matmul_a8w4.cpp

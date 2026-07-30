@@ -83,7 +83,7 @@ has_tile_hand() {
 
 check_no_forbidden_tokens() {
   local asm="$1"
-  local forbidden_re='((^|[^A-Za-z0-9_.])L\.|set_flag|wait_flag|TSync|B\.SET|B\.WAIT|BSTART\.TMA\b|BSTART\.CUBE\b|MAMULB)'
+  local forbidden_re='((^|[^A-Za-z0-9_.])L\.|set_flag|wait_flag|TSync|B\.SET|B\.WAIT|B\.ARG\b|BSTART\.TMA\b|BSTART\.CUBE\b|MAMULB)'
   if grep -Eq "$forbidden_re" "$asm"; then
     echo "error: forbidden legacy or non-auto-mode token found in $asm" >&2
     exit 1
@@ -95,29 +95,27 @@ check_tma_descriptor_headers() {
   awk '
     /BSTART\.T(LOAD|STORE)/ {
       inblk = 1
-      seen_arg = 0
       seen_ior = 0
       seen_iot = 0
       next
     }
     inblk && /BSTART\./ {
-      if (!seen_arg || !seen_ior || !seen_iot) {
+      if (!seen_ior || !seen_iot) {
         exit 1
       }
       inblk = 0
     }
     inblk {
-      if ($0 ~ /B\.ARG/) seen_arg = 1
       if ($0 ~ /B\.IOR/) seen_ior = 1
       if ($0 ~ /B\.IOT/) seen_iot = 1
     }
     END {
-      if (inblk && (!seen_arg || !seen_ior || !seen_iot)) {
+      if (inblk && (!seen_ior || !seen_iot)) {
         exit 1
       }
     }
   ' "$asm" || {
-    echo "error: missing B.ARG/B.IOR/B.IOT descriptor in TMA block of $asm" >&2
+    echo "error: missing B.IOR/B.IOT descriptor in typed TMA block of $asm" >&2
     exit 1
   }
 }
@@ -145,8 +143,6 @@ done
 
 grep -qE "\\bBSTART\\.TLOAD\\b" "$OUT_DIR/tload_store.s"
 grep -qE "\\bBSTART\\.TSTORE\\b" "$OUT_DIR/tload_store.s"
-grep -qE "\\bBSTART\\.TMATMUL\\b" "$OUT_DIR/mamulb.s"
-grep -qE "\\bBSTART\\.ACCCVT\\b" "$OUT_DIR/mamulb.s"
 grep -qE "\\bBSTART\\.TMATMUL\\.ACC\\b" "$OUT_DIR/tmatmul_acc.s"
 grep -qE "\\bBSTART\\.ACCCVT\\b" "$OUT_DIR/tmatmul_acc.s"
 grep -qE "\\bBSTART\\.TMATMUL\\b" "$OUT_DIR/gemm.s"
@@ -187,4 +183,4 @@ if [[ "${RUN_PTO_PARITY:-0}" == "1" ]]; then
     --timeout "${PTO_PARITY_TIMEOUT:-180}"
 fi
 
-echo "ok: generated PTO->Linx v0.57 assembly in $OUT_DIR"
+echo "ok: generated PTO 0.57.1 -> Linx assembly in $OUT_DIR"
