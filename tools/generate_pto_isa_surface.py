@@ -78,14 +78,59 @@ def source_catalog(lock: dict[str, object], pto_spec_root: Path) -> dict[str, ob
         raise ValueError(
             f"pto-spec revision mismatch: expected {expected_commit}, got {actual_commit}"
         )
-    path = pto_spec_root / str(source["catalog"])
-    actual_sha = sha256(path)
-    expected_sha = str(source["catalog_sha256"])
-    if actual_sha != expected_sha:
-        raise ValueError(
-            f"pto-spec catalog digest mismatch: expected {expected_sha}, got {actual_sha}"
+    def check_file(path_key: str, sha_key: str) -> Path:
+        path = pto_spec_root / str(source[path_key])
+        actual_sha = sha256(path)
+        expected_sha = str(source[sha_key])
+        if actual_sha != expected_sha:
+            raise ValueError(
+                f"pto-spec {path_key} digest mismatch: expected {expected_sha}, got {actual_sha}"
+            )
+        return path
+
+    catalog_path = check_file("catalog", "catalog_sha256")
+    manifest = None
+    if "release_manifest" in source:
+        manifest_path = check_file("release_manifest", "release_manifest_sha256")
+        manifest = read_json(manifest_path)
+        expected_content = str(source.get("content_sha256", ""))
+        if manifest.get("content_sha256") != expected_content:
+            raise ValueError(
+                "pto-spec content digest mismatch: "
+                f"expected {expected_content}, got {manifest.get('content_sha256')}"
+            )
+        expected_encoding = str(source.get("encoding_projection_sha256", ""))
+        if manifest.get("encoding_projection_sha256") != expected_encoding:
+            raise ValueError(
+                "pto-spec encoding projection digest mismatch: "
+                f"expected {expected_encoding}, got {manifest.get('encoding_projection_sha256')}"
+            )
+    hardware = None
+    if "hardware_conformance_profile" in source:
+        hardware_path = check_file(
+            "hardware_conformance_profile",
+            "hardware_conformance_profile_sha256",
         )
-    return read_json(path)
+        hardware = read_json(hardware_path)
+        declared = (manifest or {}).get("hardware_conformance_profile", {})
+        if (
+            declared.get("path") != source["hardware_conformance_profile"]
+            or declared.get("sha256")
+            != source["hardware_conformance_profile_sha256"]
+            or declared.get("profile_id") != hardware.get("profile_id")
+        ):
+            raise ValueError("pto-spec manifest does not bind the locked hardware profile")
+    if "numeric_vectors" in source:
+        vectors_path = check_file("numeric_vectors", "numeric_vectors_sha256")
+        vectors = read_json(vectors_path)
+        if (
+            hardware is None
+            or vectors.get("hardware_profile_id") != hardware.get("profile_id")
+            or vectors.get("hardware_profile_sha256")
+            != source["hardware_conformance_profile_sha256"]
+        ):
+            raise ValueError("pto-spec numeric vectors do not bind the locked hardware profile")
+    return read_json(catalog_path)
 
 
 def project_catalog(lock: dict[str, object], catalog: dict[str, object]) -> dict[str, object]:
@@ -162,12 +207,7 @@ def project_catalog(lock: dict[str, object], catalog: dict[str, object]) -> dict
     return {
         "schema_version": 1,
         "profile": str(lock["profile"]),
-        "source": {
-            "repository": str(source["repository"]),
-            "commit": str(source["commit"]),
-            "catalog": str(source["catalog"]),
-            "catalog_sha256": str(source["catalog_sha256"]),
-        },
+        "source": dict(source),
         "operation_count": expected_count,
         "family_counts": expected_counts,
         "deleted_names": sorted(deleted),
