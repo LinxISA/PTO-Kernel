@@ -66,6 +66,10 @@ def main() -> int:
             errors.append(
                 f"{family}: global histogram algorithm must not misuse row-wise THISTOGRAM"
             )
+        if "pto::TSORT" in implementation:
+            errors.append(
+                f"{family}: algorithm without an index destination must not misuse TSORT"
+            )
         for source in sources:
             apis = ports.get(source, [])
             if not apis:

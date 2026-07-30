@@ -46,6 +46,25 @@ inline __attribute__((always_inline)) void for_each_index(int count, Fn &&fn) {
 }
 
 template <typename T>
+inline __attribute__((always_inline)) void
+stable_sort_rows(T *destination, const T *source, int rows, int cols) {
+  for_each_index(rows, [&](int row) {
+    T *output_row = destination + row * cols;
+    const T *input_row = source + row * cols;
+    for_each_index(cols, [&](int col) { output_row[col] = input_row[col]; });
+    for (int col = 1; col < cols; ++col) {
+      const T value = output_row[col];
+      int insert = col;
+      while (insert > 0 && value < output_row[insert - 1]) {
+        output_row[insert] = output_row[insert - 1];
+        --insert;
+      }
+      output_row[insert] = value;
+    }
+  });
+}
+
+template <typename T>
 inline __attribute__((always_inline)) void load(VecTile<T> &tile, const T *src,
                                                 int valid_rows, int valid_cols,
                                                 int row_stride) {

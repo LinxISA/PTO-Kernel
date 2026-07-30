@@ -51,11 +51,12 @@ extern "C" void deepseek_moe_mask_indices_by_tp_i32(int *indices, int count,
 
 extern "C" int deepseek_moe_unique_group_indices_i32(int *indices, int count) {
   using namespace deepseek::pto0571;
-  VecTile<int> input;
-  VecTile<int> sorted;
-  load(input, indices);
-  pto::TSORT(sorted, input);
-  store(indices, sorted);
+  const int full_rows = count / kCols;
+  const int tail = count % kCols;
+  stable_sort_rows(indices, indices, full_rows, kCols);
+  if (tail != 0)
+    stable_sort_rows(indices + full_rows * kCols,
+                     indices + full_rows * kCols, 1, tail);
   return count;
 }
 
@@ -73,17 +74,10 @@ extern "C" void deepseek_moe_topk_gate_f32(float *topk_scores,
                                            const float *scores, int tokens,
                                            int experts, int topk) {
   using namespace deepseek::pto0571;
-  (void)tokens;
-  (void)experts;
   (void)topk;
-  VecTile<float> input;
-  VecTile<float> sorted;
-  VecTile<int> indices;
-  load(input, scores);
-  pto::TSORT(sorted, input);
-  pto::TEXPANDS(indices, 0);
-  store(topk_scores, sorted);
-  store(topk_indices, indices);
+  stable_sort_rows(topk_scores, scores, tokens, experts);
+  for_each_index(tokens * experts,
+                 [&](int index) { topk_indices[index] = 0; });
 }
 
 extern "C" void deepseek_moe_top2_sum_gate_f32(float *top2_scores,
@@ -91,18 +85,10 @@ extern "C" void deepseek_moe_top2_sum_gate_f32(float *top2_scores,
                                                const float *scores, int tokens,
                                                int experts) {
   using namespace deepseek::pto0571;
-  (void)tokens;
-  (void)experts;
-  VecTile<float> input;
-  VecTile<float> sorted;
-  VecTile<float> normalized;
-  VecTile<int> indices;
-  load(input, scores);
-  pto::TSORT(sorted, input);
-  row_normalize(normalized, sorted);
-  pto::TEXPANDS(indices, 0);
-  store(top2_scores, normalized);
-  store(top2_indices, indices);
+  stable_sort_rows(top2_scores, scores, tokens, experts);
+  deepseek_moe_normalize_weight_f32(top2_scores, tokens, experts);
+  for_each_index(tokens * experts,
+                 [&](int index) { top2_indices[index] = 0; });
 }
 
 extern "C" void deepseek_moe_topk_sum_group_f32(float *topk_sum, int *top_group,
@@ -116,12 +102,10 @@ extern "C" void deepseek_moe_topk_sum_group_f32(float *topk_sum, int *top_group,
   (void)experts_per_group;
   (void)topk;
   VecTile<float> input;
-  VecTile<float> sorted;
   VecTile<float> sum;
   VecTile<int> group;
   load(input, scores);
-  pto::TSORT(sorted, input);
-  pto::TROWSUM(sum, sorted);
+  pto::TROWSUM(sum, input);
   pto::TEXPANDS(group, 0);
   store(topk_sum, sum);
   store(top_group, group);

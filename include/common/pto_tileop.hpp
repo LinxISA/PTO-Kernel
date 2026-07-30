@@ -637,15 +637,6 @@ inline void TTRANS(DstTile &dst, const SrcTile &src) {
   dst.SetValidShape(src.GetValidCol(), src.GetValidRow());
 }
 
-template <typename DstTile, typename SrcTile>
-inline void TSORT(DstTile &dst, const SrcTile &src) {
-  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
-  dst.raw() =
-      linx::detail::teplUnary<tepl::TSORT, detail::tileSizeCode<DstTile>(),
-                              detail::tileDTypeCode<DstTile>()>(
-          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
-}
-
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TGATHER(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
   dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());
