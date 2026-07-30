@@ -197,9 +197,10 @@ swiglu(VecTile<float> &dst, VecTile<float> &gate, VecTile<float> &up) {
   pto::TMUL(dst, activated, up);
 }
 
-inline __attribute__((always_inline)) void quantize_rows(VecTile<int8_t> &dst,
-                                                         VecTile<float> &scale,
-                                                         VecTile<float> &src) {
+template <typename ScaleReady>
+inline __attribute__((always_inline)) void
+quantize_rows(VecTile<int8_t> &dst, VecTile<float> &scale,
+              VecTile<float> &src, ScaleReady &&scale_ready) {
   VecTile<float> absolute;
   VecTile<float> maximum;
   VecTile<float> expanded(src.GetValidRow(), src.GetValidCol());
@@ -207,6 +208,7 @@ inline __attribute__((always_inline)) void quantize_rows(VecTile<int8_t> &dst,
   pto::TABS(absolute, src);
   pto::TROWMAX(maximum, absolute);
   pto::TDIVS(scale, maximum, 127.0f);
+  scale_ready(scale);
   pto::TROWEXPAND(expanded, scale);
   pto::TDIV(normalized, src, expanded);
   pto::TCVT(dst, normalized);

@@ -11,9 +11,10 @@ extern "C" void deepseek_quant_per_token_i8(int8_t *dst, float *scales,
         VecTile<float> scale;
         VecTile<int8_t> quantized;
         load(input, src + row * hidden + col, valid_rows, valid_cols, hidden);
-        quantize_rows(quantized, scale, input);
+        quantize_rows(quantized, scale, input, [&](VecTile<float> &ready) {
+          store(scales + row, ready, 1);
+        });
         store(dst + row * hidden + col, quantized, hidden);
-        store(scales + row, scale, 1);
       });
 }
 
@@ -27,9 +28,9 @@ extern "C" void deepseek_quant_per_block_i8(int8_t *dst, float *scales,
   VecTile<float> scale;
   VecTile<int8_t> quantized;
   load(input, src);
-  quantize_rows(quantized, scale, input);
+  quantize_rows(quantized, scale, input,
+                [&](VecTile<float> &ready) { store(scales, ready, 1); });
   store(dst, quantized);
-  store(scales, scale, 1);
 }
 
 extern "C" void deepseek_quant_per_block_lossless_i8(int8_t *dst,
@@ -43,9 +44,10 @@ extern "C" void deepseek_quant_per_block_lossless_i8(int8_t *dst,
   VecTile<float> scale;
   VecTile<int8_t> quantized;
   load(input, src);
-  quantize_rows(quantized, scale, input);
+  quantize_rows(quantized, scale, input, [&](VecTile<float> &ready) {
+    store(reinterpret_cast<float *>(scale_bits), ready, 1);
+  });
   store(dst, quantized);
-  store(reinterpret_cast<float *>(scale_bits), scale, 1);
 }
 
 extern "C" void deepseek_quant_per_channel_i8(int8_t *dst, float *scales,
@@ -61,10 +63,10 @@ extern "C" void deepseek_quant_per_channel_i8(int8_t *dst, float *scales,
   VecTile<int8_t> quantized;
   load(input, src);
   pto::TTRANS(transposed, input);
-  quantize_rows(quantized_t, scale, transposed);
+  quantize_rows(quantized_t, scale, transposed,
+                [&](VecTile<float> &ready) { store(scales, ready, 1); });
   pto::TTRANS(quantized, quantized_t);
   store(dst, quantized);
-  store(scales, scale, 1);
 }
 
 extern "C" void deepseek_quant_per_channel_transpose_i8(int8_t *dst,
@@ -80,9 +82,9 @@ extern "C" void deepseek_quant_per_channel_transpose_i8(int8_t *dst,
   VecTile<int8_t> quantized;
   load(input, src);
   pto::TTRANS(transposed, input);
-  quantize_rows(quantized, scale, transposed);
+  quantize_rows(quantized, scale, transposed,
+                [&](VecTile<float> &ready) { store(scales, ready, 1); });
   store(dst, quantized);
-  store(scales, scale, 1);
 }
 
 extern "C" void deepseek_quant_per_channel_fused_i8(int8_t *dst, float *scales,
@@ -103,10 +105,10 @@ extern "C" void deepseek_quant_per_channel_fused_i8(int8_t *dst, float *scales,
   load(right, rhs);
   pto::TADD(fused, left, right);
   pto::TTRANS(transposed, fused);
-  quantize_rows(quantized_t, scale, transposed);
+  quantize_rows(quantized_t, scale, transposed,
+                [&](VecTile<float> &ready) { store(scales, ready, 1); });
   pto::TTRANS(quantized, quantized_t);
   store(dst, quantized);
-  store(scales, scale, 1);
 }
 
 extern "C" void deepseek_quant_cast_back_f32(float *dst, const int8_t *src,
@@ -171,9 +173,9 @@ deepseek_quant_swiglu_forward_per_token_i8(int8_t *dst, float *scales,
   load(gate_tile, gate);
   load(up_tile, up);
   swiglu(activated, gate_tile, up_tile);
-  quantize_rows(output, scale, activated);
+  quantize_rows(output, scale, activated,
+                [&](VecTile<float> &ready) { store(scales, ready, 1); });
   store(dst, output);
-  store(scales, scale, 1);
 }
 
 extern "C" void deepseek_quant_swiglu_forward_per_channel_transpose_i8(
@@ -192,9 +194,9 @@ extern "C" void deepseek_quant_swiglu_forward_per_channel_transpose_i8(
   load(up_tile, up);
   swiglu(activated, gate_tile, up_tile);
   pto::TTRANS(transposed, activated);
-  quantize_rows(output, scale, transposed);
+  quantize_rows(output, scale, transposed,
+                [&](VecTile<float> &ready) { store(scales, ready, 1); });
   store(dst, output);
-  store(scales, scale, 1);
 }
 
 extern "C" void deepseek_quant_swiglu_backward_per_token_i8(
@@ -231,10 +233,10 @@ extern "C" void deepseek_quant_swiglu_backward_per_token_i8(
   pto::TMUL(grad_gate_f32, grad_gate_f32, derivative);
   pto::TMUL(grad_up_f32, grad_tile, gate_tile);
   pto::TMUL(grad_up_f32, grad_up_f32, probability);
-  quantize_rows(grad_gate_i8, gate_scale, grad_gate_f32);
-  quantize_rows(grad_up_i8, up_scale, grad_up_f32);
+  quantize_rows(grad_gate_i8, gate_scale, grad_gate_f32,
+                [&](VecTile<float> &ready) { store(gate_scales, ready, 1); });
+  quantize_rows(grad_up_i8, up_scale, grad_up_f32,
+                [&](VecTile<float> &ready) { store(up_scales, ready, 1); });
   store(dgate, grad_gate_i8);
   store(dup, grad_up_i8);
-  store(gate_scales, gate_scale, 1);
-  store(up_scales, up_scale, 1);
 }
