@@ -646,16 +646,6 @@ inline void TSORT(DstTile &dst, const SrcTile &src) {
           src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
 }
 
-template <typename DstTile, typename SrcTile>
-inline void THISTOGRAM(DstTile &dst, const SrcTile &src) {
-  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
-  dst.raw() =
-      linx::detail::teplUnary<tepl::THISTOGRAM, detail::tileSizeCode<DstTile>(),
-                              detail::tileDTypeCode<DstTile>()>(
-          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
-  dst.SetValidShape(1, src.GetValidCol());
-}
-
 template <typename DstTile, typename SrcTile0, typename SrcTile1>
 inline void TGATHER(DstTile &dst, const SrcTile0 &src0, const SrcTile1 &src1) {
   dst.SetValidShape(src0.GetValidRow(), src0.GetValidCol());

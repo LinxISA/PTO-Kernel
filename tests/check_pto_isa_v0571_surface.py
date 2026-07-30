@@ -96,6 +96,10 @@ def main() -> int:
         errors.append("TDIVS aliases TRECIP instead of preserving its own identity")
     if re.search(r"\bTileI32\s+mamulb\s*\(", low_level) or "cubeMamulb" in backend:
         errors.append("legacy mamulb identity remains in the Linx backend")
+    if re.search(
+        r"inline\s+void\s+THISTOGRAM\s*\([^,]+,[^,]+\)", tileop, re.MULTILINE
+    ):
+        errors.append("legacy two-operand THISTOGRAM convenience overload remains")
     if "dependent_false" not in generated or "defined(__LINXISA__)" not in generated:
         errors.append("canonical Linx dispatch does not fail closed for unsupported operations")
 

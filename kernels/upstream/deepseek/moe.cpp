@@ -5,30 +5,32 @@ extern "C" void deepseek_moe_aux_fi_f32(float *frequency,
                                         const int *expert_indices, int tokens,
                                         int topk, int experts) {
   using namespace deepseek::pto0571;
-  (void)topk;
-  (void)experts;
-  VecTile<int> indices;
-  VecTile<int> counts;
-  VecTile<float> counts_f32;
-  VecTile<float> normalized;
-  load(indices, expert_indices);
-  pto::THISTOGRAM(counts, indices);
-  pto::TCVT(counts_f32, counts);
-  pto::TDIVS(normalized, counts_f32, static_cast<float>(tokens));
-  store(frequency, normalized);
+  for_each_index(experts, [&](int expert) {
+    frequency[expert] = 0.0f;
+  });
+  for_each_index(tokens * topk, [&](int index) {
+    const int expert = expert_indices[index];
+    if (expert >= 0 && expert < experts)
+      frequency[expert] += 1.0f;
+  });
+  if (tokens > 0)
+    for_each_index(experts, [&](int expert) {
+      frequency[expert] /= static_cast<float>(tokens);
+    });
 }
 
 extern "C" void deepseek_moe_group_count_i32(int *counts,
                                              const int *group_indices,
                                              int count, int groups) {
   using namespace deepseek::pto0571;
-  (void)count;
-  (void)groups;
-  VecTile<int> indices;
-  VecTile<int> histogram;
-  load(indices, group_indices);
-  pto::THISTOGRAM(histogram, indices);
-  store(counts, histogram);
+  for_each_index(groups, [&](int group) {
+    counts[group] = 0;
+  });
+  for_each_index(count, [&](int index) {
+    const int group = group_indices[index];
+    if (group >= 0 && group < groups)
+      ++counts[group];
+  });
 }
 
 extern "C" void deepseek_moe_mask_indices_by_tp_i32(int *indices, int count,
@@ -173,14 +175,24 @@ extern "C" void deepseek_moe_get_fused_mapping_i32(int *sorted_tokens,
                                                    const int *expert_indices,
                                                    int rows, int experts) {
   using namespace deepseek::pto0571;
-  (void)rows;
-  (void)experts;
-  VecTile<int> input;
-  VecTile<int> sorted;
-  VecTile<int> histogram;
-  load(input, expert_indices);
-  pto::TSORT(sorted, input);
-  pto::THISTOGRAM(histogram, input);
-  store(sorted_tokens, sorted);
-  store(expert_offsets, histogram);
+  for_each_index(experts, [&](int expert) {
+    expert_offsets[expert] = 0;
+  });
+  for_each_index(rows, [&](int index) {
+    const int expert = expert_indices[index];
+    if (expert >= 0 && expert < experts)
+      ++expert_offsets[expert];
+  });
+
+  int output = 0;
+  for_each_index(experts, [&](int expert) {
+    for_each_index(expert_offsets[expert], [&](int) {
+      sorted_tokens[output++] = expert;
+    });
+  });
+  for_each_index(rows, [&](int index) {
+    const int expert = expert_indices[index];
+    if (expert < 0 || expert >= experts)
+      sorted_tokens[output++] = expert;
+  });
 }

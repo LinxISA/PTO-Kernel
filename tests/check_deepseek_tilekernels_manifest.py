@@ -62,6 +62,10 @@ def main() -> int:
             errors.append(f"{family}: scalar runtime helper included by PTO kernel")
         if "pto::T" not in implementation:
             errors.append(f"{family}: no named PTO ISA intrinsic calls found")
+        if "pto::THISTOGRAM" in implementation:
+            errors.append(
+                f"{family}: global histogram algorithm must not misuse row-wise THISTOGRAM"
+            )
         for source in sources:
             apis = ports.get(source, [])
             if not apis:
