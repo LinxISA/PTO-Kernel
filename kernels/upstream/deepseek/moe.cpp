@@ -4,37 +4,39 @@
 extern "C" void deepseek_moe_aux_fi_f32(float *frequency,
                                         const int *expert_indices, int tokens,
                                         int topk, int experts) {
-  using namespace deepseek::pto57;
-  (void)topk;
-  (void)experts;
-  VecTile<int> indices;
-  VecTile<int> counts;
-  VecTile<float> counts_f32;
-  VecTile<float> normalized;
-  load(indices, expert_indices);
-  pto::THISTOGRAM(counts, indices);
-  pto::TCVT(counts_f32, counts);
-  pto::TDIVS(normalized, counts_f32, static_cast<float>(tokens));
-  store(frequency, normalized);
+  using namespace deepseek::pto0571;
+  for_each_index(experts, [&](int expert) {
+    frequency[expert] = 0.0f;
+  });
+  for_each_index(tokens * topk, [&](int index) {
+    const int expert = expert_indices[index];
+    if (expert >= 0 && expert < experts)
+      frequency[expert] += 1.0f;
+  });
+  if (tokens > 0)
+    for_each_index(experts, [&](int expert) {
+      frequency[expert] /= static_cast<float>(tokens);
+    });
 }
 
 extern "C" void deepseek_moe_group_count_i32(int *counts,
                                              const int *group_indices,
                                              int count, int groups) {
-  using namespace deepseek::pto57;
-  (void)count;
-  (void)groups;
-  VecTile<int> indices;
-  VecTile<int> histogram;
-  load(indices, group_indices);
-  pto::THISTOGRAM(histogram, indices);
-  store(counts, histogram);
+  using namespace deepseek::pto0571;
+  for_each_index(groups, [&](int group) {
+    counts[group] = 0;
+  });
+  for_each_index(count, [&](int index) {
+    const int group = group_indices[index];
+    if (group >= 0 && group < groups)
+      ++counts[group];
+  });
 }
 
 extern "C" void deepseek_moe_mask_indices_by_tp_i32(int *indices, int count,
                                                     int experts_per_rank,
                                                     int rank) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)count;
   VecTile<int> input;
   VecTile<int> shifted;
@@ -48,18 +50,19 @@ extern "C" void deepseek_moe_mask_indices_by_tp_i32(int *indices, int count,
 }
 
 extern "C" int deepseek_moe_unique_group_indices_i32(int *indices, int count) {
-  using namespace deepseek::pto57;
-  VecTile<int> input;
-  VecTile<int> sorted;
-  load(input, indices);
-  pto::TSORT(sorted, input);
-  store(indices, sorted);
+  using namespace deepseek::pto0571;
+  const int full_rows = count / kCols;
+  const int tail = count % kCols;
+  stable_sort_rows(indices, indices, full_rows, kCols);
+  if (tail != 0)
+    stable_sort_rows(indices + full_rows * kCols,
+                     indices + full_rows * kCols, 1, tail);
   return count;
 }
 
 extern "C" void deepseek_moe_normalize_weight_f32(float *weights, int tokens,
                                                   int topk) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   tilewise_unary(weights, weights, tokens, topk,
                  [&](VecTile<float> &output, VecTile<float> &input) {
                    row_normalize(output, input);
@@ -70,37 +73,22 @@ extern "C" void deepseek_moe_topk_gate_f32(float *topk_scores,
                                            int *topk_indices,
                                            const float *scores, int tokens,
                                            int experts, int topk) {
-  using namespace deepseek::pto57;
-  (void)tokens;
-  (void)experts;
+  using namespace deepseek::pto0571;
   (void)topk;
-  VecTile<float> input;
-  VecTile<float> sorted;
-  VecTile<int> indices;
-  load(input, scores);
-  pto::TSORT(sorted, input);
-  pto::TEXPANDS(indices, 0);
-  store(topk_scores, sorted);
-  store(topk_indices, indices);
+  stable_sort_rows(topk_scores, scores, tokens, experts);
+  for_each_index(tokens * experts,
+                 [&](int index) { topk_indices[index] = 0; });
 }
 
 extern "C" void deepseek_moe_top2_sum_gate_f32(float *top2_scores,
                                                int *top2_indices,
                                                const float *scores, int tokens,
                                                int experts) {
-  using namespace deepseek::pto57;
-  (void)tokens;
-  (void)experts;
-  VecTile<float> input;
-  VecTile<float> sorted;
-  VecTile<float> normalized;
-  VecTile<int> indices;
-  load(input, scores);
-  pto::TSORT(sorted, input);
-  row_normalize(normalized, sorted);
-  pto::TEXPANDS(indices, 0);
-  store(top2_scores, normalized);
-  store(top2_indices, indices);
+  using namespace deepseek::pto0571;
+  stable_sort_rows(top2_scores, scores, tokens, experts);
+  deepseek_moe_normalize_weight_f32(top2_scores, tokens, experts);
+  for_each_index(tokens * experts,
+                 [&](int index) { top2_indices[index] = 0; });
 }
 
 extern "C" void deepseek_moe_topk_sum_group_f32(float *topk_sum, int *top_group,
@@ -108,21 +96,15 @@ extern "C" void deepseek_moe_topk_sum_group_f32(float *topk_sum, int *top_group,
                                                 int groups,
                                                 int experts_per_group,
                                                 int topk) {
-  using namespace deepseek::pto57;
-  (void)tokens;
-  (void)groups;
-  (void)experts_per_group;
+  using namespace deepseek::pto0571;
   (void)topk;
   VecTile<float> input;
-  VecTile<float> sorted;
   VecTile<float> sum;
-  VecTile<int> group;
   load(input, scores);
-  pto::TSORT(sorted, input);
-  pto::TROWSUM(sum, sorted);
-  pto::TEXPANDS(group, 0);
+  pto::TROWSUM(sum, input);
   store(topk_sum, sum);
-  store(top_group, group);
+  for_each_index(tokens * groups * experts_per_group,
+                 [&](int index) { top_group[index] = 0; });
 }
 
 extern "C" void deepseek_moe_expand_to_fused_f32(float *expanded,
@@ -130,7 +112,7 @@ extern "C" void deepseek_moe_expand_to_fused_f32(float *expanded,
                                                  const int *token_indices,
                                                  const float *weights, int rows,
                                                  int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)rows;
   (void)hidden;
   VecTile<float> values;
@@ -151,7 +133,7 @@ extern "C" void deepseek_moe_reduce_fused_f32(float *tokens,
                                               const int *token_indices,
                                               const float *weights, int rows,
                                               int tokens_n, int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)rows;
   (void)tokens_n;
   (void)hidden;
@@ -172,15 +154,25 @@ extern "C" void deepseek_moe_get_fused_mapping_i32(int *sorted_tokens,
                                                    int *expert_offsets,
                                                    const int *expert_indices,
                                                    int rows, int experts) {
-  using namespace deepseek::pto57;
-  (void)rows;
-  (void)experts;
-  VecTile<int> input;
-  VecTile<int> sorted;
-  VecTile<int> histogram;
-  load(input, expert_indices);
-  pto::TSORT(sorted, input);
-  pto::THISTOGRAM(histogram, input);
-  store(sorted_tokens, sorted);
-  store(expert_offsets, histogram);
+  using namespace deepseek::pto0571;
+  for_each_index(experts, [&](int expert) {
+    expert_offsets[expert] = 0;
+  });
+  for_each_index(rows, [&](int index) {
+    const int expert = expert_indices[index];
+    if (expert >= 0 && expert < experts)
+      ++expert_offsets[expert];
+  });
+
+  int output = 0;
+  for_each_index(experts, [&](int expert) {
+    for_each_index(expert_offsets[expert], [&](int) {
+      sorted_tokens[output++] = expert;
+    });
+  });
+  for_each_index(rows, [&](int index) {
+    const int expert = expert_indices[index];
+    if (expert < 0 || expert >= experts)
+      sorted_tokens[output++] = expert;
+  });
 }

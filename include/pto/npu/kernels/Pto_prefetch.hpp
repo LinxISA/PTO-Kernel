@@ -58,7 +58,7 @@ PTO_INTERNAL void PtoPrefetchKernelBody(__gm__ uint8_t *tensor, uint64_t total_e
         const uint32_t cur_elems = (remaining < tile_elems) ? static_cast<uint32_t>(remaining) : tile_elems;
 
         PrefetchTile tile(cur_elems);
-        TASSIGN(tile, 0u);
+        helper::TASSIGN(tile, 0u);
 
         PrefetchShape dyn_shape(1, 1, 1, 1, static_cast<int>(cur_elems));
         PrefetchStride dyn_stride(1, 1, 1, static_cast<int>(cur_elems), 1);

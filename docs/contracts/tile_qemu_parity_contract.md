@@ -8,16 +8,19 @@ This contract governs parity between host simulation and Linx QEMU execution.
   implemented, invoked by the QEMU AVS, and paired with a numerical or
   structural `PTO-ORACLE` contract in the AVS source.
 - Every PTO operation reachable from those kernels must exist in the frozen
-  v0.57 catalog, have a QEMU semantic selector case, and appear in the Linx
+  PTO 0.57.1 catalog, have a QEMU semantic selector case, and appear in the Linx
   assembly generated from the kernel sources.
 - Quantization paths require scalar reconstruction checks; positive scales or
   nonzero digests alone are not correctness evidence.
 - Host simulation and QEMU must both pass after a kernel or backend change.
+- `tests/check_qemu_pto_isa_v0571_inventory.py` compares operation names and
+  selector/function values, not textual hexadecimal occurrence. Missing,
+  extra, renamed, or selector-mismatched QEMU identities are hard failures.
 
 `tests/check_deepseek_verification_coverage.py` is the machine gate for these
-denominators. Its JSON report intentionally distinguishes the full 111-op ISA
+denominators. Its JSON report intentionally distinguishes the full 120-op ISA
 catalog from the kernel-reachable subset. A 32/32 kernel result must never be
-reported as 111/111 executable ISA semantic coverage.
+reported as 120/120 executable ISA semantic coverage.
 
 ## Integration assumptions
 

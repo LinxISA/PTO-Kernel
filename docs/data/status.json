@@ -3294,7 +3294,6 @@
     "gemm_reuse_a_fp16": "matmul/gemm_reuse_a_fp16.cpp",
     "gemm_reuse_ab_fp16": "matmul/gemm_reuse_ab_fp16.cpp",
     "gemm_reuse_b_fp16": "matmul/gemm_reuse_b_fp16.cpp",
-    "mamulb": "matmul/mamulb.cpp",
     "matmul_a16w4": "matmul/matmul_a16w4.cpp",
     "matmul_a16w8": "matmul/matmul_a16w8.cpp",
     "matmul_a8w4": "matmul/matmul_a8w4.cpp",

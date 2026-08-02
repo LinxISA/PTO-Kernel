@@ -3,8 +3,14 @@ project(PTOKernel LANGUAGES CXX)
 
 option(PTO_ENABLE_TESTS "Enable PTO-Kernel local tests" ON)
 option(PTO_ENABLE_LINX_CROSS "Enable Linx cross asm contract checks" OFF)
+option(PTO_ENABLE_LINX_MIXED_TILE_SIMT
+  "Enable experimental CUDA-style mixed Tile/SIMT launches in Linx cross checks" OFF)
 set(PTO_BENCHMARK_WORKBOOK "" CACHE FILEPATH
   "Explicit benchmark workbook used by the manifest validation test")
+set(PTO_SPEC_ROOT "" CACHE PATH
+  "Optional pto-spec checkout used to verify the PTO 0.57.1 repository lock")
+set(PTO_LINXISA_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." CACHE PATH
+  "LinxISA superproject checkout used by integration coverage tests")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -36,6 +42,17 @@ if(PTO_ENABLE_TESTS)
     target_compile_definitions(pto_tile_shape_smoke PRIVATE PTO_HOST_SIM=1)
     add_test(NAME pto_tile_shape_smoke COMMAND pto_tile_shape_smoke)
 
+    add_executable(pto_isa_api_compile tests/pto_isa_api_compile.cpp)
+    target_link_libraries(pto_isa_api_compile PRIVATE pto_headers)
+    target_compile_definitions(pto_isa_api_compile PRIVATE __CPU_SIM=1)
+    add_test(NAME pto_isa_api_compile COMMAND pto_isa_api_compile)
+    add_test(
+      NAME pto_isa_v0571_deleted_compile_negative
+      COMMAND ${PTO_PYTHON3}
+              ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_pto_isa_deleted_compile.py
+              --compiler ${CMAKE_CXX_COMPILER}
+              --include ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
     add_executable(
       pto_deepseek_kernel_host_oracle
       tests/deepseek_kernel_host_oracle.cpp
@@ -53,7 +70,26 @@ if(PTO_ENABLE_TESTS)
       COMMAND ${PTO_PYTHON3}
               ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_deepseek_verification_coverage.py
               --repo-root ${CMAKE_CURRENT_SOURCE_DIR}
-              --super-root ${CMAKE_CURRENT_SOURCE_DIR}/../..)
+              --super-root ${PTO_LINXISA_ROOT})
+    set(PTO_ISA_GENERATOR_ARGS --check)
+    if(PTO_SPEC_ROOT)
+      list(APPEND PTO_ISA_GENERATOR_ARGS --pto-spec-root "${PTO_SPEC_ROOT}")
+    endif()
+    add_test(
+      NAME pto_isa_v0571_generated_clean
+      COMMAND ${PTO_PYTHON3}
+              ${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_pto_isa_surface.py
+              ${PTO_ISA_GENERATOR_ARGS})
+    add_test(
+      NAME pto_isa_v0571_direct_surface
+      COMMAND ${PTO_PYTHON3}
+              ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_pto_isa_v0571_surface.py)
+    add_test(
+      NAME pto_isa_v0571_qemu_inventory
+      COMMAND ${PTO_PYTHON3}
+              ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_qemu_pto_isa_v0571_inventory.py
+              --catalog ${CMAKE_CURRENT_SOURCE_DIR}/docs/contracts/generated/pto_isa_v0571_surface.json
+              --qemu-helper ${PTO_LINXISA_ROOT}/emulator/qemu/target/linx/helper.c)
 
     if(PTO_BENCHMARK_WORKBOOK)
       add_test(
@@ -67,8 +103,13 @@ if(PTO_ENABLE_TESTS)
 endif()
 
 if(PTO_ENABLE_LINX_CROSS)
+  if(PTO_ENABLE_LINX_MIXED_TILE_SIMT)
+    set(PTO_LINX_MIXED_TILE_SIMT 1)
+  else()
+    set(PTO_LINX_MIXED_TILE_SIMT 0)
+  endif()
   set(PTO_CLANGXX_DEFAULT
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../compiler/llvm/build-linxisa-clang/bin/clang++")
+    "${PTO_LINXISA_ROOT}/compiler/llvm/build-linxisa-clang/bin/clang++")
   if(EXISTS "${PTO_CLANGXX_DEFAULT}")
     set(PTO_CLANGXX "${PTO_CLANGXX_DEFAULT}" CACHE FILEPATH
       "clang++ used for Linx cross asm checks" FORCE)
@@ -101,7 +142,7 @@ if(PTO_ENABLE_LINX_CROSS)
               -target linx64-linx-none-elf
               -O2
               -S
-              -DPTO_USE_MIXED_TILE_SIMT=1
+              -DPTO_USE_MIXED_TILE_SIMT=${PTO_LINX_MIXED_TILE_SIMT}
               -ffreestanding
               -fno-builtin
               -fno-stack-protector
@@ -128,7 +169,7 @@ if(PTO_ENABLE_LINX_CROSS)
     COMMAND ${PTO_PYTHON3}
             ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_deepseek_verification_coverage.py
             --repo-root ${CMAKE_CURRENT_SOURCE_DIR}
-            --super-root ${CMAKE_CURRENT_SOURCE_DIR}/../..
+            --super-root ${PTO_LINXISA_ROOT}
             --asm ${PTO_DEEPSEEK_ASM_OUTPUTS}
             --report-out ${CMAKE_BINARY_DIR}/deepseek-verification-coverage.json
     DEPENDS pto_deepseek_linx_asm

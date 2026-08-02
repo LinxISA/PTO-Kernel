@@ -23,7 +23,6 @@ REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
 PARITY_KERNEL_ORDER = [
     "tload_store",
-    "mamulb",
     "tmatmul_acc",
     "gemm",
     "gemm_basic",

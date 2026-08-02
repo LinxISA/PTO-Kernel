@@ -32,7 +32,7 @@ int main() {
   for (int i = 0; i < 5 * 6; ++i)
     transposed[i] = -77.0f;
   Tile transposed_tile;
-  pto::TTRANSPOSE(transposed_tile, lhs);
+  pto::TTRANS(transposed_tile, lhs);
   using TransposedMatrix = pto::global_tensor<float, pto::RowMajor<5, 6>>;
   pto::global_iterator<TransposedMatrix, Tile> transposed_it(transposed);
   pto::TSTORE(transposed_it(0, 0), transposed_tile);

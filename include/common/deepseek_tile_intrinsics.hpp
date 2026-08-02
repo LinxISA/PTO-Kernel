@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-namespace deepseek::pto57 {
+namespace deepseek::pto0571 {
 
 constexpr int kRows = 32;
 constexpr int kCols = 32;
@@ -43,6 +43,47 @@ template <typename Fn>
 inline __attribute__((always_inline)) void for_each_index(int count, Fn &&fn) {
   for (int index = 0; index < count; ++index)
     fn(index);
+}
+
+template <typename T>
+inline __attribute__((always_inline)) void
+stable_sort_rows(T *destination, const T *source, int rows, int cols) {
+  for_each_index(rows, [&](int row) {
+    T *output_row = destination + row * cols;
+    const T *input_row = source + row * cols;
+    for_each_index(cols, [&](int col) { output_row[col] = input_row[col]; });
+    if (cols <= kCols) {
+      T scratch[kCols];
+      for (int width = 1; width < cols; width *= 2) {
+        for (int begin = 0; begin < cols; begin += width * 2) {
+          const int middle = tile_extent(begin + width, cols);
+          const int end = tile_extent(begin + width * 2, cols);
+          int left = begin;
+          int right = middle;
+          for (int output = begin; output < end; ++output) {
+            if (left < middle &&
+                (right >= end || !(output_row[right] < output_row[left]))) {
+              scratch[output] = output_row[left++];
+            } else {
+              scratch[output] = output_row[right++];
+            }
+          }
+        }
+        for_each_index(cols,
+                       [&](int col) { output_row[col] = scratch[col]; });
+      }
+    } else {
+      for (int col = 1; col < cols; ++col) {
+        const T value = output_row[col];
+        int insert = col;
+        while (insert > 0 && value < output_row[insert - 1]) {
+          output_row[insert] = output_row[insert - 1];
+          --insert;
+        }
+        output_row[insert] = value;
+      }
+    }
+  });
 }
 
 template <typename T>
@@ -156,9 +197,10 @@ swiglu(VecTile<float> &dst, VecTile<float> &gate, VecTile<float> &up) {
   pto::TMUL(dst, activated, up);
 }
 
-inline __attribute__((always_inline)) void quantize_rows(VecTile<int8_t> &dst,
-                                                         VecTile<float> &scale,
-                                                         VecTile<float> &src) {
+template <typename ScaleReady>
+inline __attribute__((always_inline)) void
+quantize_rows(VecTile<int8_t> &dst, VecTile<float> &scale,
+              VecTile<float> &src, ScaleReady &&scale_ready) {
   VecTile<float> absolute;
   VecTile<float> maximum;
   VecTile<float> expanded(src.GetValidRow(), src.GetValidCol());
@@ -166,6 +208,7 @@ inline __attribute__((always_inline)) void quantize_rows(VecTile<int8_t> &dst,
   pto::TABS(absolute, src);
   pto::TROWMAX(maximum, absolute);
   pto::TDIVS(scale, maximum, 127.0f);
+  scale_ready(scale);
   pto::TROWEXPAND(expanded, scale);
   pto::TDIV(normalized, src, expanded);
   pto::TCVT(dst, normalized);
@@ -179,11 +222,11 @@ inline __attribute__((always_inline)) void sinkhorn_step(VecTile<float> &dst,
   VecTile<float> column_normalized_t;
   pto::TEXP(positive, src);
   row_normalize(row_normalized, positive);
-  pto::TTRANSPOSE(transposed, row_normalized);
+  pto::TTRANS(transposed, row_normalized);
   row_normalize(column_normalized_t, transposed);
-  pto::TTRANSPOSE(dst, column_normalized_t);
+  pto::TTRANS(dst, column_normalized_t);
 }
 
-} // namespace deepseek::pto57
+} // namespace deepseek::pto0571
 
 #endif // PTO_COMMON_DEEPSEEK_TILE_INTRINSICS_HPP

@@ -7,6 +7,7 @@
 #include <string.h>
 #endif
 #include <common/linx_lowp_types.hpp>
+#include <common/generated/pto_isa_v0571.hpp>
 
 namespace pto {
 namespace linx {
@@ -78,7 +79,7 @@ template <> struct is_floating_point<double> {
 
 template <typename T> struct DTypeCode {
   static_assert(dependent_false<T>::value,
-                "PTO Linx canonical v0.57: unsupported tile dtype");
+                "PTO Linx canonical 0.57.1: unsupported tile dtype");
 };
 
 template <> struct DTypeCode<int> {
@@ -216,7 +217,7 @@ constexpr unsigned dtypeElemCountForBytes(uint64_t bytes, unsigned dtype) {
 
 template <typename Scalar> inline long long encodeScalar(Scalar value) {
   static_assert(is_arithmetic<Scalar>::value,
-                "PTO Linx canonical v0.57: scalar operand must be arithmetic");
+                "PTO Linx canonical 0.57.1: scalar operand must be arithmetic");
   if constexpr (is_same<Scalar, pto::fp16_t>::value) {
     return static_cast<long long>(value.bits);
   } else if constexpr (is_same<Scalar, pto::fp8_e4m3_t>::value) {
@@ -348,70 +349,71 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems, unsigned rows,
     out.words[i] = 0u;
 
   switch (TileOpcode & 0x3ffu) {
-  case 0x00du: // TCVT
+  case isa_v0571::tepl::TCVT:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float f = dequantWordToF32(src.words[i], SrcDType);
       out.words[i] = quantizeF32ToWord(f, DType);
     }
     break;
-  case 0x00bu: // TRELU
+  case isa_v0571::tepl::TRELU:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float f = dequantWordToF32(src.words[i], DType);
       out.words[i] = quantizeF32ToWord(f > 0.0f ? f : 0.0f, DType);
     }
     break;
-  case 0x00eu: // TEXP
+  case isa_v0571::tepl::TEXP:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float f = dequantWordToF32(src.words[i], DType);
       out.words[i] = quantizeF32ToWord(expf(f), DType);
     }
     break;
-  case 0x018u: // TRECIP
+  case isa_v0571::tepl::TRECIP:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float f = dequantWordToF32(src.words[i], DType);
       float inv = (f == 0.0f) ? 0.0f : (1.0f / f);
       out.words[i] = quantizeF32ToWord(inv, DType);
     }
     break;
-  case 0x00fu: // TLOG
+  case isa_v0571::tepl::TLOG:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float f = dequantWordToF32(src.words[i], DType);
       out.words[i] = quantizeF32ToWord(f > 0.0f ? logf(f) : -INFINITY, DType);
     }
     break;
-  case 0x010u: // TSQRT
-  case 0x011u: // TRSQRT
+  case isa_v0571::tepl::TSQRT:
+  case isa_v0571::tepl::TRSQRT:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float f = dequantWordToF32(src.words[i], DType);
       const float root = f >= 0.0f ? sqrtf(f) : NAN;
-      out.words[i] = quantizeF32ToWord((TileOpcode & 0x3ffu) == 0x011u
+      out.words[i] = quantizeF32ToWord((TileOpcode & 0x3ffu) ==
+                                               isa_v0571::tepl::TRSQRT
                                            ? (root == 0.0f ? 0.0f : 1.0f / root)
                                            : root,
                                        DType);
     }
     break;
-  case 0x02du: // TABS
+  case isa_v0571::tepl::TABS:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float f = dequantWordToF32(src.words[i], DType);
       out.words[i] = quantizeF32ToWord(fabsf(f), DType);
     }
     break;
-  case 0x02eu: // TNOT
+  case isa_v0571::tepl::TNOT:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i)
       out.words[i] = ~src.words[i];
     break;
-  case 0x012u:   // TROWMAX
-  case 0x013u:   // TROWMIN
-  case 0x014u: { // TROWSUM
+  case isa_v0571::tepl::TROWMAX:
+  case isa_v0571::tepl::TROWMIN:
+  case isa_v0571::tepl::TROWSUM: {
     for (unsigned r = 0; r < rows; ++r) {
       float value = dequantWordToF32(src.words[r * cols], DType);
-      if ((TileOpcode & 0x3ffu) == 0x014u)
+      if ((TileOpcode & 0x3ffu) == isa_v0571::tepl::TROWSUM)
         value = 0.0f;
       for (unsigned c = 0; c < cols; ++c) {
         const float cur = dequantWordToF32(src.words[r * cols + c], DType);
-        if ((TileOpcode & 0x3ffu) == 0x012u)
+        if ((TileOpcode & 0x3ffu) == isa_v0571::tepl::TROWMAX)
           value = value > cur ? value : cur;
-        else if ((TileOpcode & 0x3ffu) == 0x013u)
+        else if ((TileOpcode & 0x3ffu) == isa_v0571::tepl::TROWMIN)
           value = value < cur ? value : cur;
         else
           value += cur;
@@ -420,18 +422,18 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems, unsigned rows,
     }
     break;
   }
-  case 0x015u:   // TCOLMAX
-  case 0x016u:   // TCOLMIN
-  case 0x017u: { // TCOLSUM
+  case isa_v0571::tepl::TCOLMAX:
+  case isa_v0571::tepl::TCOLMIN:
+  case isa_v0571::tepl::TCOLSUM: {
     for (unsigned c = 0; c < cols; ++c) {
       float value = dequantWordToF32(src.words[c], DType);
-      if ((TileOpcode & 0x3ffu) == 0x017u)
+      if ((TileOpcode & 0x3ffu) == isa_v0571::tepl::TCOLSUM)
         value = 0.0f;
       for (unsigned r = 0; r < rows; ++r) {
         const float cur = dequantWordToF32(src.words[r * cols + c], DType);
-        if ((TileOpcode & 0x3ffu) == 0x015u)
+        if ((TileOpcode & 0x3ffu) == isa_v0571::tepl::TCOLMAX)
           value = value > cur ? value : cur;
-        else if ((TileOpcode & 0x3ffu) == 0x016u)
+        else if ((TileOpcode & 0x3ffu) == isa_v0571::tepl::TCOLMIN)
           value = value < cur ? value : cur;
         else
           value += cur;
@@ -440,22 +442,23 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems, unsigned rows,
     }
     break;
   }
-  case 0x01du: { // TTRANSPOSE
+  case isa_v0571::tepl::TTRANS: {
     for (unsigned r = 0; r < rows; ++r)
       for (unsigned c = 0; c < cols; ++c)
         out.words[c * rows + r] = src.words[r * cols + c];
     break;
   }
-  case 0x01eu:   // TCOLEXPAND
-  case 0x01fu: { // TROWEXPAND
+  case isa_v0571::tepl::TCOLEXPAND:
+  case isa_v0571::tepl::TROWEXPAND: {
     for (unsigned r = 0; r < rows; ++r)
       for (unsigned c = 0; c < cols; ++c)
-        out.words[r * cols + c] = (TileOpcode & 0x3ffu) == 0x01eu
+        out.words[r * cols + c] =
+            (TileOpcode & 0x3ffu) == isa_v0571::tepl::TCOLEXPAND
                                       ? src.words[c]
                                       : src.words[r * cols];
     break;
   }
-  case 0x0c0u: { // TSORT
+  case isa_v0571::tepl::TSORT: {
     for (unsigned i = 0; i < elems && i < kTileWords; ++i)
       out.words[i] = src.words[i];
     for (unsigned r = 0; r < rows; ++r)
@@ -472,7 +475,7 @@ inline RawTile teplUnaryHost(const RawTile &src, unsigned elems, unsigned rows,
       }
     break;
   }
-  case 0x0c2u: // THISTOGRAM
+  case isa_v0571::tepl::THISTOGRAM:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i)
       out.words[src.words[i] % (cols == 0u ? 1u : cols)] += 1u;
     break;
@@ -491,32 +494,32 @@ inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs,
     out.words[i] = 0u;
 
   switch (TileOpcode & 0x3ffu) {
-  case 0x01au: // TGATHER
+  case isa_v0571::tepl::TGATHER:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i)
       out.words[i] = lhs.words[rhs.words[i] % elems];
     break;
-  case 0x01bu: // TSCATTER
+  case isa_v0571::tepl::TSCATTER:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i)
       out.words[rhs.words[i] % elems] = lhs.words[i];
     break;
-  case 0x000u: // TADD
-  case 0x020u: // TADDS
+  case isa_v0571::tepl::TADD:
+  case isa_v0571::tepl::TADDS:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float a = dequantWordToF32(lhs.words[i], DType);
       const float b = dequantWordToF32(rhs.words[i], DType);
       out.words[i] = quantizeF32ToWord(a + b, DType);
     }
     break;
-  case 0x001u: // TSUB
-  case 0x021u: // TSUBS
+  case isa_v0571::tepl::TSUB:
+  case isa_v0571::tepl::TSUBS:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float a = dequantWordToF32(lhs.words[i], DType);
       const float b = dequantWordToF32(rhs.words[i], DType);
       out.words[i] = quantizeF32ToWord(a - b, DType);
     }
     break;
-  case 0x002u:   // TMUL
-  case 0x022u: { // TMULS
+  case isa_v0571::tepl::TMUL:
+  case isa_v0571::tepl::TMULS: {
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float a = dequantWordToF32(lhs.words[i], DType);
       const float b = dequantWordToF32(rhs.words[i], DType);
@@ -524,8 +527,8 @@ inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs,
     }
     break;
   }
-  case 0x003u:   // TDIV
-  case 0x023u: { // TDIVS
+  case isa_v0571::tepl::TDIV:
+  case isa_v0571::tepl::TDIVS: {
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float a = dequantWordToF32(lhs.words[i], DType);
       const float b = dequantWordToF32(rhs.words[i], DType);
@@ -534,8 +537,8 @@ inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs,
     }
     break;
   }
-  case 0x004u:   // TMAX
-  case 0x024u: { // TMAXS
+  case isa_v0571::tepl::TMAX:
+  case isa_v0571::tepl::TMAXS: {
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float a = dequantWordToF32(lhs.words[i], DType);
       const float b = dequantWordToF32(rhs.words[i], DType);
@@ -543,8 +546,8 @@ inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs,
     }
     break;
   }
-  case 0x005u:   // TMIN
-  case 0x025u: { // TMINS
+  case isa_v0571::tepl::TMIN:
+  case isa_v0571::tepl::TMINS: {
     for (unsigned i = 0; i < elems && i < kTileWords; ++i) {
       const float a = dequantWordToF32(lhs.words[i], DType);
       const float b = dequantWordToF32(rhs.words[i], DType);
@@ -552,28 +555,28 @@ inline RawTile teplBinaryHost(const RawTile &lhs, const RawTile &rhs,
     }
     break;
   }
-  case 0x006u: // TAND
-  case 0x026u: // TANDS
+  case isa_v0571::tepl::TAND:
+  case isa_v0571::tepl::TANDS:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i)
       out.words[i] = lhs.words[i] & rhs.words[i];
     break;
-  case 0x007u: // TOR
-  case 0x027u: // TORS
+  case isa_v0571::tepl::TOR:
+  case isa_v0571::tepl::TORS:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i)
       out.words[i] = lhs.words[i] | rhs.words[i];
     break;
-  case 0x008u: // TXOR
-  case 0x028u: // TXORS
+  case isa_v0571::tepl::TXOR:
+  case isa_v0571::tepl::TXORS:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i)
       out.words[i] = lhs.words[i] ^ rhs.words[i];
     break;
-  case 0x009u: // TSHL
-  case 0x029u: // TSHLS
+  case isa_v0571::tepl::TSHL:
+  case isa_v0571::tepl::TSHLS:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i)
       out.words[i] = lhs.words[i] << (rhs.words[i] & 31u);
     break;
-  case 0x00au: // TSHR
-  case 0x02au: // TSHRS
+  case isa_v0571::tepl::TSHR:
+  case isa_v0571::tepl::TSHRS:
     for (unsigned i = 0; i < elems && i < kTileWords; ++i)
       out.words[i] = lhs.words[i] >> (rhs.words[i] & 31u);
     break;
@@ -590,7 +593,7 @@ inline RawTile tileTLoad(const void *base, unsigned valid_col,
                          unsigned valid_row, unsigned physical_col,
                          uint64_t stride_bytes) {
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
-                "PTO Linx canonical v0.57: size_code must be in [5,8]");
+                "PTO Linx canonical 0.57.1: size_code must be in [5,8]");
 #if defined(PTO_HOST_SIM)
   (void)Layout;
   RawTile out{};
@@ -669,7 +672,7 @@ inline void tileTStore(void *base, RawTile tile, unsigned valid_col,
                        unsigned valid_row, unsigned physical_col,
                        uint64_t stride_bytes) {
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
-                "PTO Linx canonical v0.57: size_code must be in [5,8]");
+                "PTO Linx canonical 0.57.1: size_code must be in [5,8]");
 #if defined(PTO_HOST_SIM)
   (void)Layout;
   const uint64_t bytes64 = sizeBytesFromCode(SizeCode);
@@ -738,9 +741,9 @@ inline void tileTStore(void *base, RawTile tile, unsigned valid_col,
 }
 
 template <unsigned M, unsigned N, unsigned K>
-inline RawTile cubeMamulb(RawTile lhs, RawTile rhs) {
+inline RawTile cubeTMatmul(RawTile lhs, RawTile rhs) {
   static_assert(M <= 0xffu && N <= 0xffu && K <= 0xffu,
-                "PTO Linx canonical v0.57: cube dimensions must fit u8");
+                "PTO Linx canonical 0.57.1: cube dimensions must fit u8");
 #if defined(PTO_HOST_SIM)
   RawTile out{};
   for (unsigned i = 0; i < kTileWords; ++i)
@@ -770,9 +773,9 @@ inline RawTile cubeMamulb(RawTile lhs, RawTile rhs) {
 }
 
 template <unsigned M, unsigned N, unsigned K>
-inline RawTile cubeMamulbAcc(RawTile acc, RawTile lhs, RawTile rhs) {
+inline RawTile cubeTMatmulAcc(RawTile acc, RawTile lhs, RawTile rhs) {
   static_assert(M <= 0xffu && N <= 0xffu && K <= 0xffu,
-                "PTO Linx canonical v0.57: cube dimensions must fit u8");
+                "PTO Linx canonical 0.57.1: cube dimensions must fit u8");
 #if defined(PTO_HOST_SIM)
   RawTile out = acc;
   for (unsigned i = 0; i < M; ++i) {
@@ -804,9 +807,9 @@ template <unsigned TileOpcode, unsigned SizeCode, unsigned DType,
 inline RawTile teplUnary(RawTile src, unsigned valid_col, unsigned valid_row,
                          unsigned physical_col) {
   static_assert(TileOpcode <= 0x3ffu,
-                "PTO Linx canonical v0.57: TEPL tile opcode must fit u10");
+                "PTO Linx canonical 0.57.1: TEPL tile opcode must fit u10");
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
-                "PTO Linx canonical v0.57: size_code must be in [5,8]");
+                "PTO Linx canonical 0.57.1: size_code must be in [5,8]");
 #if defined(PTO_HOST_SIM)
   const uint64_t bytes64 = sizeBytesFromCode(SizeCode);
   const unsigned elem_bytes = dtypeElemBytesForStorage(DType);
@@ -824,7 +827,7 @@ inline RawTile teplUnary(RawTile src, unsigned valid_col, unsigned valid_row,
   RawTile packed_out = teplUnaryHost<TileOpcode, DType, SrcDType>(
       packed, valid_row * valid_col, valid_row, valid_col);
   RawTile out{};
-  if constexpr ((TileOpcode & 0x3ffu) == 0x01du) {
+  if constexpr ((TileOpcode & 0x3ffu) == isa_v0571::tepl::TTRANS) {
     for (unsigned r = 0; r < valid_col; ++r)
       for (unsigned c = 0; c < valid_row; ++c)
         out.words[r * physical_col + c] = packed_out.words[r * valid_row + c];
@@ -844,9 +847,9 @@ template <unsigned TileOpcode, unsigned SizeCode, unsigned DType>
 inline RawTile teplBinary(RawTile lhs, RawTile rhs, unsigned valid_col,
                           unsigned valid_row, unsigned physical_col) {
   static_assert(TileOpcode <= 0x3ffu,
-                "PTO Linx canonical v0.57: TEPL tile opcode must fit u10");
+                "PTO Linx canonical 0.57.1: TEPL tile opcode must fit u10");
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
-                "PTO Linx canonical v0.57: size_code must be in [5,8]");
+                "PTO Linx canonical 0.57.1: size_code must be in [5,8]");
 #if defined(PTO_HOST_SIM)
   const uint64_t bytes64 = sizeBytesFromCode(SizeCode);
   const unsigned elem_bytes = dtypeElemBytesForStorage(DType);
@@ -882,10 +885,10 @@ template <unsigned TileOpcode, unsigned SizeCode, unsigned DType, unsigned Mode,
 inline RawTile teplBinaryScalar(RawTile lhs, Scalar scalar, unsigned valid_col,
                                 unsigned valid_row, unsigned physical_col) {
   static_assert(TileOpcode <= 0x3ffu,
-                "PTO Linx canonical v0.57: TEPL tile opcode must fit u10");
+                "PTO Linx canonical 0.57.1: TEPL tile opcode must fit u10");
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
-                "PTO Linx canonical v0.57: size_code must be in [5,8]");
-  static_assert(Mode == 1u, "PTO Linx canonical v0.57: tepl.binary.scalar "
+                "PTO Linx canonical 0.57.1: size_code must be in [5,8]");
+  static_assert(Mode == 1u, "PTO Linx canonical 0.57.1: tepl.binary.scalar "
                             "requires operand mode=VS(1)");
 #if defined(PTO_HOST_SIM)
   RawTile rhs{};
@@ -913,12 +916,12 @@ template <unsigned TileOpcode, unsigned SizeCode, unsigned DType, unsigned Mode,
 inline RawTile teplSplat(Scalar scalar, unsigned valid_col, unsigned valid_row,
                          unsigned physical_col) {
   static_assert(TileOpcode <= 0x3ffu,
-                "PTO Linx canonical v0.57: TEPL tile opcode must fit u10");
+                "PTO Linx canonical 0.57.1: TEPL tile opcode must fit u10");
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
-                "PTO Linx canonical v0.57: size_code must be in [5,8]");
+                "PTO Linx canonical 0.57.1: size_code must be in [5,8]");
   static_assert(
       Mode == 2u,
-      "PTO Linx canonical v0.57: tepl.splat requires operand mode=SV(2)");
+      "PTO Linx canonical 0.57.1: tepl.splat requires operand mode=SV(2)");
 #if defined(PTO_HOST_SIM)
   RawTile out{};
   for (unsigned i = 0; i < kTileWords; ++i)
@@ -931,7 +934,7 @@ inline RawTile teplSplat(Scalar scalar, unsigned valid_col, unsigned valid_row,
           ? 0u
           : dtypeElemCountForBytes(bytes64, DType);
 
-  if ((TileOpcode & 0x3ffu) != 0x019u)
+  if ((TileOpcode & 0x3ffu) != isa_v0571::tepl::TEXPANDS)
     return out;
 
   const long long bits = encodeScalar(scalar);
@@ -954,11 +957,11 @@ template <unsigned SizeCode, unsigned DType, long long Layout,
           unsigned HasLayout, unsigned Mode>
 inline RawTile tileTMov(RawTile src) {
   static_assert(SizeCode >= 5u && SizeCode <= 8u,
-                "PTO Linx canonical v0.57: size_code must be in [5,8]");
+                "PTO Linx canonical 0.57.1: size_code must be in [5,8]");
   static_assert(HasLayout <= 1u,
-                "PTO Linx canonical v0.57: has_layout must be bool");
+                "PTO Linx canonical 0.57.1: has_layout must be bool");
   static_assert(Mode <= 1u,
-                "PTO Linx canonical v0.57: tmov mode must be 0(V2V) or 1(A2V)");
+                "PTO Linx canonical 0.57.1: tmov mode must be 0(V2V) or 1(A2V)");
 #if defined(PTO_HOST_SIM)
   (void)DType;
   (void)Layout;

@@ -8,7 +8,7 @@
   },
   "integration": {
     "runtime_dependencies": [],
-    "target": "Linx ISA v0.57 PTO intrinsics",
+    "target": "PTO ISA 0.57.1 intrinsics",
     "kernel_contract": "loop-free PTO ISA data paths; scalar code is limited to ABI/control setup and external test oracles",
     "closure_shape": "32x32 physical carriers with runtime rectangular tail masks",
     "verification": "freestanding compile/encoding audit and QEMU standard-input oracle"

@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include <common/generated/pto_isa_v0571.hpp>
 #include <pto/linx/impl/backend.hpp>
 
 namespace pto {
@@ -57,7 +58,9 @@ inline __attribute__((always_inline)) void static_for(Fn &&fn) {
   }
 }
 
-// TMA format selectors used by B.ARG in canonical v0.57.
+// Layout values consumed by the typed TMA builtins. PTO 0.57.1 removed the
+// public B.ARG command forms; these are backend layout attributes, not ISA
+// instruction identities.
 constexpr long long kLayoutNorm = 0ll;  // NORM.normal
 constexpr long long kLayoutND2NZ = 2ll; // ND2NZ.normal
 constexpr long long kLayoutND2ZN = 3ll; // ND2ZN.normal
@@ -70,13 +73,13 @@ template <typename TileT> constexpr unsigned tileBytes() {
   constexpr unsigned bytes =
       static_cast<unsigned>(rows * cols * sizeof(typename TileT::DType));
   static_assert(bytes > 0u,
-                "PTO Linx canonical v0.57: tile bytes must be positive");
+                "PTO Linx canonical 0.57.1: tile bytes must be positive");
   return bytes;
 }
 
 template <typename TileT> constexpr unsigned tileSizeCode() {
   static_assert(tileBytes<TileT>() <= linx::detail::kMaxTileBytes,
-                "PTO Linx canonical v0.57: tile size exceeds 4KB");
+                "PTO Linx canonical 0.57.1: tile size exceeds 4KB");
   // Keep one 4 KiB carrier across data types. TCVT changes the element type,
   // but not the architectural tile-register capacity or its SSA identity.
   return 8u;
@@ -212,7 +215,8 @@ struct Tile {
       : valid_rows_(validRows), valid_cols_(validCols) {}
 
   template <typename Scalar> explicit Tile(Scalar scalar) {
-    raw_ = linx::detail::teplSplat<0x019u, detail::tileSizeCode<Tile>(),
+    raw_ = linx::detail::teplSplat<isa_v0571::tepl::TEXPANDS,
+                                   detail::tileSizeCode<Tile>(),
                                    detail::tileDTypeCode<Tile>(), 2u>(
         scalar, GetValidCol(), GetValidRow(), Cols);
   }
@@ -290,67 +294,7 @@ private:
   Element *base_;
 };
 
-namespace tepl {
-constexpr unsigned TADD = 0x000u;
-constexpr unsigned TSUB = 0x001u;
-constexpr unsigned TMUL = 0x002u;
-constexpr unsigned TDIV = 0x003u;
-constexpr unsigned TMAX = 0x004u;
-constexpr unsigned TMIN = 0x005u;
-constexpr unsigned TAND = 0x006u;
-constexpr unsigned TOR = 0x007u;
-constexpr unsigned TXOR = 0x008u;
-constexpr unsigned TSHL = 0x009u;
-constexpr unsigned TSHR = 0x00au;
-constexpr unsigned TRELU = 0x00bu;
-constexpr unsigned TPRELU = 0x00cu;
-constexpr unsigned TCVT = 0x00du;
-constexpr unsigned TEXP = 0x00eu;
-constexpr unsigned TLOG = 0x00fu;
-constexpr unsigned TSQRT = 0x010u;
-constexpr unsigned TRSQRT = 0x011u;
-constexpr unsigned TROWMAX = 0x012u;
-constexpr unsigned TROWMIN = 0x013u;
-constexpr unsigned TROWSUM = 0x014u;
-constexpr unsigned TCOLMAX = 0x015u;
-constexpr unsigned TCOLMIN = 0x016u;
-constexpr unsigned TCOLSUM = 0x017u;
-constexpr unsigned TRECIP = 0x018u;
-constexpr unsigned TEXPANDS = 0x019u;
-constexpr unsigned TGATHER = 0x01au;
-constexpr unsigned TSCATTER = 0x01bu;
-constexpr unsigned TRESHAPE = 0x01cu;
-constexpr unsigned TTRANSPOSE = 0x01du;
-constexpr unsigned TCOLEXPAND = 0x01eu;
-constexpr unsigned TROWEXPAND = 0x01fu;
-constexpr unsigned TADDS = 0x020u;
-constexpr unsigned TSUBS = 0x021u;
-constexpr unsigned TMULS = 0x022u;
-constexpr unsigned TDIVS = 0x023u;
-constexpr unsigned TMAXS = 0x024u;
-constexpr unsigned TMINS = 0x025u;
-constexpr unsigned TANDS = 0x026u;
-constexpr unsigned TORS = 0x027u;
-constexpr unsigned TXORS = 0x028u;
-constexpr unsigned TSHLS = 0x029u;
-constexpr unsigned TSHRS = 0x02au;
-constexpr unsigned TCMP = 0x02bu;
-constexpr unsigned TSEL = 0x02cu;
-constexpr unsigned TABS = 0x02du;
-constexpr unsigned TNOT = 0x02eu;
-constexpr unsigned TCMPS = 0x033u;
-constexpr unsigned TSELS = 0x034u;
-constexpr unsigned TCONCAT = 0x087u;
-constexpr unsigned TSORT = 0x0c0u;
-constexpr unsigned TMRGSORT = 0x0c1u;
-constexpr unsigned THISTOGRAM = 0x0c2u;
-constexpr unsigned TPARTADD = 0x0c3u;
-constexpr unsigned TPARTMUL = 0x0c4u;
-constexpr unsigned TPARTMAX = 0x0c5u;
-constexpr unsigned TPARTMIN = 0x0c6u;
-constexpr unsigned TPARTARGMAX = 0x0c7u;
-constexpr unsigned TPARTARGMIN = 0x0c8u;
-} // namespace tepl
+namespace tepl = isa_v0571::tepl;
 
 // Core tile ops used by PR5 FlashAttention bring-up.
 template <typename DstTile, typename SrcAddress>
@@ -394,13 +338,13 @@ inline void TMOV(DstTile &dst, const SrcTile &src, unsigned mode = 0u) {
 
 template <typename TileRes, typename TileLeft_, typename TileRight_>
 inline void TMATMUL(TileRes &dst, const TileLeft_ &lhs, const TileRight_ &rhs) {
-  // Canonical v0.57 compiler policy:
+  // Canonical 0.57.1 compiler policy:
   // tile_bytes = ceil(m*n*k*elem_bits/8) must fit <=4KB
   // (m=Rows, n=Cols, k=lhs.Cols).
   constexpr unsigned M = static_cast<unsigned>(TileRes::Rows);
   constexpr unsigned N = static_cast<unsigned>(TileRes::Cols);
   constexpr unsigned K = static_cast<unsigned>(TileLeft_::Cols);
-  dst.raw() = linx::detail::cubeMamulb<M, N, K>(lhs.raw(), rhs.raw());
+  dst.raw() = linx::detail::cubeTMatmul<M, N, K>(lhs.raw(), rhs.raw());
 }
 
 template <typename TileRes, typename TileLeft_, typename TileRight_>
@@ -410,7 +354,7 @@ inline void TMATMUL_ACC(TileRes &dst, TileRes &acc, const TileLeft_ &lhs,
   constexpr unsigned N = static_cast<unsigned>(TileRes::Cols);
   constexpr unsigned K = static_cast<unsigned>(TileLeft_::Cols);
   dst.raw() =
-      linx::detail::cubeMamulbAcc<M, N, K>(acc.raw(), lhs.raw(), rhs.raw());
+      linx::detail::cubeTMatmulAcc<M, N, K>(acc.raw(), lhs.raw(), rhs.raw());
 }
 
 template <typename TileRes, typename TileLeft_, typename TileRight_>
@@ -684,32 +628,13 @@ inline void TRESHAPE(DstTile &dst, const SrcTile &src) {
 }
 
 template <typename DstTile, typename SrcTile>
-inline void TTRANSPOSE(DstTile &dst, const SrcTile &src) {
+inline void TTRANS(DstTile &dst, const SrcTile &src) {
   dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
   dst.raw() =
-      linx::detail::teplUnary<tepl::TTRANSPOSE, detail::tileSizeCode<DstTile>(),
+      linx::detail::teplUnary<tepl::TTRANS, detail::tileSizeCode<DstTile>(),
                               detail::tileDTypeCode<DstTile>()>(
           src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
   dst.SetValidShape(src.GetValidCol(), src.GetValidRow());
-}
-
-template <typename DstTile, typename SrcTile>
-inline void TSORT(DstTile &dst, const SrcTile &src) {
-  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
-  dst.raw() =
-      linx::detail::teplUnary<tepl::TSORT, detail::tileSizeCode<DstTile>(),
-                              detail::tileDTypeCode<DstTile>()>(
-          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
-}
-
-template <typename DstTile, typename SrcTile>
-inline void THISTOGRAM(DstTile &dst, const SrcTile &src) {
-  dst.SetValidShape(src.GetValidRow(), src.GetValidCol());
-  dst.raw() =
-      linx::detail::teplUnary<tepl::THISTOGRAM, detail::tileSizeCode<DstTile>(),
-                              detail::tileDTypeCode<DstTile>()>(
-          src.raw(), dst.GetValidCol(), dst.GetValidRow(), DstTile::Cols);
-  dst.SetValidShape(1, src.GetValidCol());
 }
 
 template <typename DstTile, typename SrcTile0, typename SrcTile1>

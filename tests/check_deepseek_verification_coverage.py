@@ -9,6 +9,8 @@ import re
 import sys
 from pathlib import Path
 
+from check_qemu_pto_isa_v0571_inventory import parse_inventory
+
 
 API_RE = re.compile(r"\b(deepseek_[a-z0-9_]+)\s*\(")
 INTRINSIC_RE = re.compile(r"\bpto::(T[A-Z0-9_]+)\s*\(")
@@ -39,12 +41,6 @@ def read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="replace")
 
 
-def canonical_pto_name(name: str) -> str:
-    if name == "TTRANSPOSE":
-        return "TTRANS"
-    return name
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -67,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
     header_path = repo_root / "include/common/deepseek_tilekernels.hpp"
     helper_path = repo_root / "include/common/deepseek_tile_intrinsics.hpp"
     kernel_dir = repo_root / "kernels/upstream/deepseek"
-    catalog_path = super_root / "isa/v0.57/state/pto_ops.json"
+    catalog_path = repo_root / "docs/contracts/generated/pto_isa_v0571_surface.json"
     avs_path = super_root / "avs/qemu/tests/17_deepseek_tilekernels.cpp"
     qemu_helper_path = super_root / "emulator/qemu/target/linx/helper.c"
 
@@ -106,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     source_text = kernel_text + "\n" + read_text(helper_path)
     reachable_intrinsics = set(INTRINSIC_RE.findall(source_text)) | {"TLOAD", "TSTORE"}
-    reachable_catalog_names = {canonical_pto_name(name) for name in reachable_intrinsics}
+    reachable_catalog_names = reachable_intrinsics
 
     missing_declarations = sorted(expected_apis - declared_apis)
     missing_definitions = sorted(expected_apis - defined_apis)
@@ -122,18 +118,17 @@ def main(argv: list[str] | None = None) -> int:
         for operation in catalog.get("operations", [])
         if isinstance(operation, dict)
     }
-    qemu_helper_text = read_text(qemu_helper_path).lower()
+    qemu_inventory = parse_inventory(read_text(qemu_helper_path))
     qemu_semantic_names: set[str] = set()
     for name in reachable_catalog_names:
         operation = operation_by_name.get(name, {})
-        disposition = operation.get("disposition", {})
-        family = disposition.get("family") if isinstance(disposition, dict) else None
-        selector = disposition.get("selector") if isinstance(disposition, dict) else None
-        if family == "TEPL" and isinstance(selector, str):
-            selector_token = f"0x{int(selector, 16):03x}u"
-            if selector_token in qemu_helper_text:
-                qemu_semantic_names.add(name)
-        elif family == "TMA" and f"linx_tma_{name.lower()}" in qemu_helper_text:
+        family = operation.get("family")
+        expected_identity = (
+            int(str(operation["selector"]), 16)
+            if family == "TEPL"
+            else int(operation.get("function", -1))
+        )
+        if family in qemu_inventory and qemu_inventory[family].get(name) == expected_identity:
             qemu_semantic_names.add(name)
     missing_qemu_semantics = sorted(reachable_catalog_names - qemu_semantic_names)
 
@@ -143,7 +138,7 @@ def main(argv: list[str] | None = None) -> int:
         ("manifest APIs missing QEMU AVS invocation", missing_qemu_invocations),
         ("public declarations absent from manifest", extra_declarations),
         ("implementations absent from manifest", extra_definitions),
-        ("kernel-reachable intrinsics absent from v0.57 catalog", unknown_intrinsics),
+        ("kernel-reachable intrinsics absent from PTO 0.57.1 catalog", unknown_intrinsics),
         ("manifest APIs missing runtime oracle annotations", missing_oracles),
         ("runtime oracle annotations absent from manifest", extra_oracles),
         ("kernel-reachable intrinsics missing QEMU semantic cases", missing_qemu_semantics),
@@ -170,7 +165,7 @@ def main(argv: list[str] | None = None) -> int:
         "schema_version": 1,
         "catalog": {
             "operation_count": len(catalog_names),
-            "expected_operation_count": 111,
+            "expected_operation_count": 120,
         },
         "kernel_api": {
             "manifest_count": len(expected_apis),

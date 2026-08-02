@@ -4,7 +4,7 @@
 extern "C" void deepseek_mhc_expand_fwd_f32(float *expanded, const float *input,
                                             int tokens, int streams,
                                             int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)streams;
   (void)hidden;
@@ -19,7 +19,7 @@ extern "C" void deepseek_mhc_expand_bwd_f32(float *grad_input,
                                             const float *grad_expanded,
                                             int tokens, int streams,
                                             int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)streams;
   (void)hidden;
@@ -35,7 +35,7 @@ extern "C" void deepseek_mhc_head_compute_mix_fwd_f32(float *output,
                                                       const float *mix,
                                                       int tokens, int streams,
                                                       int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)streams;
   (void)hidden;
@@ -55,7 +55,7 @@ extern "C" void deepseek_mhc_head_compute_mix_fwd_f32(float *output,
 extern "C" void deepseek_mhc_head_compute_mix_bwd_f32(
     float *grad_input, float *grad_mix, const float *grad_output,
     const float *input, const float *mix, int tokens, int streams, int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)streams;
   (void)hidden;
@@ -77,7 +77,7 @@ extern "C" void deepseek_mhc_head_compute_mix_bwd_f32(
 
 extern "C" void deepseek_mhc_norm_fwd_f32(float *output, const float *input,
                                           int rows, int hidden, float eps) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   tilewise_unary(output, input, rows, hidden,
                  [&](VecTile<float> &normalized, VecTile<float> &input_tile) {
                    rms_normalize(normalized, input_tile, eps);
@@ -88,7 +88,7 @@ extern "C" void deepseek_mhc_pre_split_mixes_fwd_f32(float *mix,
                                                      float *residual,
                                                      const float *packed,
                                                      int tokens, int streams) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)streams;
   VecTile<float> input_mix;
@@ -98,7 +98,7 @@ extern "C" void deepseek_mhc_pre_split_mixes_fwd_f32(float *mix,
   load(input_mix, packed);
   load(input_residual, packed);
   pto::TRESHAPE(mix_tile, input_mix);
-  pto::TTRANSPOSE(residual_tile, input_residual);
+  pto::TTRANS(residual_tile, input_residual);
   store(mix, mix_tile);
   store(residual, residual_tile);
 }
@@ -107,7 +107,7 @@ extern "C" void deepseek_mhc_pre_split_mixes_bwd_f32(float *grad_packed,
                                                      const float *grad_mix,
                                                      const float *grad_residual,
                                                      int tokens, int streams) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)streams;
   VecTile<float> mix;
@@ -116,7 +116,7 @@ extern "C" void deepseek_mhc_pre_split_mixes_bwd_f32(float *grad_packed,
   VecTile<float> output;
   load(mix, grad_mix);
   load(residual, grad_residual);
-  pto::TTRANSPOSE(residual_t, residual);
+  pto::TTRANS(residual_t, residual);
   pto::TADD(output, mix, residual_t);
   store(grad_packed, output);
 }
@@ -125,7 +125,7 @@ extern "C" void deepseek_mhc_pre_apply_mix_f32(float *output,
                                                const float *input,
                                                const float *mix, int tokens,
                                                int streams, int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)streams;
   (void)hidden;
@@ -142,7 +142,7 @@ extern "C" void deepseek_mhc_pre_big_fuse_f32(float *output, const float *input,
                                               const float *mix, int tokens,
                                               int streams, int hidden,
                                               float eps) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)streams;
   (void)hidden;
@@ -162,7 +162,7 @@ extern "C" void deepseek_mhc_pre_big_fuse_f32(float *output, const float *input,
 extern "C" void deepseek_mhc_sinkhorn_f32(float *output, const float *logits,
                                           int batches, int streams,
                                           int iterations) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)batches;
   (void)streams;
   (void)iterations;
@@ -177,7 +177,7 @@ extern "C" void deepseek_mhc_sinkhorn_backward_f32(float *grad_logits,
                                                    const float *grad_output,
                                                    const float *output,
                                                    int batches, int streams) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)batches;
   (void)streams;
   VecTile<float> grad;
@@ -201,7 +201,7 @@ extern "C" void deepseek_mhc_post_fwd_f32(float *output, const float *base,
                                           const float *streams_data,
                                           const float *residual_weights,
                                           int tokens, int streams, int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)streams;
   (void)hidden;
@@ -224,7 +224,7 @@ extern "C" void deepseek_mhc_post_bwd_f32(float *grad_base, float *grad_streams,
                                           const float *streams_data,
                                           const float *residual_weights,
                                           int tokens, int streams, int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)tokens;
   (void)streams;
   (void)hidden;
@@ -250,7 +250,7 @@ extern "C" void deepseek_mhc_multilayer_recompute_f32(float *output,
                                                       const float *layer_mixes,
                                                       int layers, int tokens,
                                                       int streams, int hidden) {
-  using namespace deepseek::pto57;
+  using namespace deepseek::pto0571;
   (void)layers;
   (void)tokens;
   (void)streams;

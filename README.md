@@ -20,12 +20,30 @@ cmake -S . -B build
 cmake --build build -j"$(sysctl -n hw.ncpu 2>/dev/null || nproc)"
 ctest --test-dir build --output-on-failure
 
+# Verify checked-in PTO 0.57.1 projections without rewriting them.
+python3 tools/generate_pto_isa_surface.py --check
+python3 tests/check_pto_isa_v0571_surface.py
+
+# Strong source-lock verification against an exact pto-spec checkout.
+python3 tools/generate_pto_isa_surface.py --check \
+  --pto-spec-root /path/to/pto-spec
+
 # Add -DPTO_BENCHMARK_WORKBOOK=/path/to/benchmark_master_list_completed.xlsx
 # to enable the workbook-backed manifest test.
 
 cmake -S . -B build-linx -DPTO_ENABLE_LINX_CROSS=ON
 cmake --build build-linx --target pto_linx_contracts
 ```
+
+The normative operation identity source is `PTO-ISA/pto-spec` at the commit
+recorded in `docs/contracts/pto_isa_v0571.lock.json`. The checked-in JSON and
+C++ tables are generated review projections. Regeneration requires an exact
+checkout of that locked revision; ordinary tests only run in `--check` mode.
+The generated public header contains exactly one direct entry point for every
+catalog operation, with catalog operand order and arity. No legacy or
+convenience overload namespace is retained; deleted operations are also
+covered by compile-negative tests. CTest additionally compares QEMU's
+executable TEPL/TMA/CUBE name-to-selector inventory exactly against this lock.
 
 ## LinxISA Integration Touchpoints
 - Submodule pinned by the superproject for PTO kernel bring-up
@@ -46,7 +64,7 @@ The `kernels/upstream/deepseek/` lane ports all 37 kernel source files from
 `deepseek-ai/TileKernels` main at the exact commit recorded in the provenance
 manifest. The port is freestanding and has no Python, PyTorch, CUDA, or
 TileLang runtime dependency. Kernel data paths are loop-free C++ compositions
-of named PTO ISA v0.57 intrinsics. Scalar iteration is limited to tile-grid
+of named PTO ISA 0.57.1 intrinsics. Scalar iteration is limited to tile-grid
 control in the shared helper; element data paths remain PTO operations. The
 physical carrier is 32x32 row-major, while runtime dimensions drive rectangular
 tail masks (`LB0=ValidCol`, `LB1=ValidRow`, `LB2=physical Col`) and row stride.

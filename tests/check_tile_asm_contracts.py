@@ -8,7 +8,6 @@ from pathlib import Path
 
 REQUIRED_TILE_KERNELS = {
     "tload_store",
-    "mamulb",
     "tmatmul_acc",
     "gemm",
     "gemm_basic",
@@ -55,8 +54,11 @@ REQUIRED_TILE_KERNELS = {
 DEEPSEEK_TILE_KERNELS = {"engram", "mhc", "moe", "quant", "transpose"}
 
 REQUIRED_PATTERNS = [
-    re.compile(r"\bBSTART\.T(LOAD|STORE|MOV|PREFETCH|MATMUL|MATMUL\.ACC|MATMUL\.BIAS|MATMULMX|MATMULMX\.ACC|MATMULMX\.BIAS)\b"),
-    re.compile(r"\bBSTART\.ACC(CVT)?\b"),
+    re.compile(
+        r"\bBSTART\.(?:TLOAD|TSTORE|TMOV|TPREFETCH|MGATHER(?:\.MASK|\.CAS)?|"
+        r"MSCATTER(?:\.MASK)?|TMATMUL(?:\.ACC|\.BIAS)?|TMATMULMX(?:\.ACC|\.BIAS)?|"
+        r"TGEMV(?:\.ACC|\.BIAS)?|TGEMVMX(?:\.ACC|\.BIAS)?|ACCCVT)\b"
+    ),
 ]
 REQUIRED_VBLOCK_PATTERNS = [
     re.compile(r"\bBSTART\.(MSEQ|MPAR|VSEQ|VPAR)\b"),
@@ -67,13 +69,20 @@ FORBIDDEN_PATTERNS = [
     re.compile(r"(^|[^A-Za-z0-9_.])L\."),
     re.compile(r"\b(set_flag|wait_flag|B\.SET|B\.WAIT)\b"),
     re.compile(r"\bBSTART\.(TMA|CUBE)\b"),
+    re.compile(r"\bB\.ARG\b"),
     re.compile(r"\bMAMULB(\.ACC)?\b"),
 ]
 
-TEPL_BSTART = re.compile(
-    r"^\s*BSTART\.T(?!LOAD\b|STORE\b|MOV\b|PREFETCH\b|MATMUL).*",
-    re.MULTILINE,
-)
+TILE_BSTART = re.compile(r"^\s*BSTART\.([A-Z][A-Z0-9.]*)\b.*", re.MULTILINE)
+NON_TEPL_TILE_MNEMONICS = {
+    "TLOAD", "TSTORE", "TMOV", "TPREFETCH",
+    "MGATHER", "MGATHER.MASK", "MGATHER.CAS",
+    "MSCATTER", "MSCATTER.MASK",
+    "TMATMUL", "TMATMUL.BIAS", "TMATMUL.ACC",
+    "TMATMULMX", "TMATMULMX.BIAS", "TMATMULMX.ACC",
+    "TGEMV", "TGEMV.BIAS", "TGEMV.ACC",
+    "TGEMVMX", "TGEMVMX.BIAS", "TGEMVMX.ACC", "ACCCVT",
+}
 
 
 def check_file(path: Path) -> list[str]:
@@ -87,7 +96,11 @@ def check_file(path: Path) -> list[str]:
             f"BSTART.(MSEQ|MPAR|VSEQ|VPAR) with B.TEXT/B.DIM): {path}"
         )
     if path.stem in DEEPSEEK_TILE_KERNELS:
-        starts = list(TEPL_BSTART.finditer(text))
+        starts = [
+            match
+            for match in TILE_BSTART.finditer(text)
+            if match.group(1) not in NON_TEPL_TILE_MNEMONICS
+        ]
         if not starts:
             errors.append(f"missing PTO TEPL compute block: {path}")
         for start in starts:

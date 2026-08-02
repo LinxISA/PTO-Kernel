@@ -5,7 +5,7 @@ LinxCore execution fidelity.
 
 ## Near-term
 
-- Keep strict v0.57 legal block emission validated through LLVM + asm checks.
+- Keep strict PTO 0.57.1 legal block emission validated through LLVM + asm checks.
 - Maintain host-vs-QEMU parity as the required integration signal.
 
 ## Mid-term
